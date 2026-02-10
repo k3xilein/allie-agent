@@ -17,16 +17,15 @@ export const Setup: React.FC = () => {
   useEffect(() => {
     const checkSystemStatus = async () => {
       try {
-        // Check if database is ready
-        const healthResponse = await fetch('/api/health');
-        if (!healthResponse.ok) {
+        // Check if system is initialized (users exist)
+        const statusResponse = await fetch('/api/system/status');
+        
+        if (!statusResponse.ok) {
           setDbStatus('error');
-          setError('Database is not ready. Please start the backend server.');
+          setError('Cannot connect to backend. Make sure the server is running.');
           return;
         }
 
-        // Check if system is initialized (users exist)
-        const statusResponse = await fetch('/api/system/status');
         const data = await statusResponse.json();
         
         if (data.initialized) {
