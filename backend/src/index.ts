@@ -39,6 +39,7 @@ app.use(helmet({
 const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
+  'http://memero.store:5173',
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
@@ -50,6 +51,8 @@ app.use(cors({
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      // Log rejected origins for debugging
+      console.warn(`CORS blocked origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
