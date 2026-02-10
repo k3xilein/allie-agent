@@ -6,8 +6,42 @@ Allie Agent kann jetzt **komplett ohne Terminal-Befehle** eingerichtet werden. A
 
 ### Prerequisites
 
-- Docker Desktop installiert und gestartet
+- Linux Server (Ubuntu/Debian) ODER Docker Desktop (macOS/Windows)
 - Browser (Chrome, Firefox, Edge, Safari)
+
+---
+
+## 🖥️ Option A: Linux Server (Ubuntu/Debian)
+
+**Ein einziger Befehl installiert alles automatisch!**
+
+### Step 1: Installation (Automatic) 🚀
+
+```bash
+# Clone Repository
+git clone https://github.com/k3xilein/allie-agent.git
+cd allie-agent
+
+# Run installation script (installs Docker + starts app)
+sudo bash install-docker.sh
+```
+
+**Das war's!** Das Script:
+- ✅ Installiert Docker Engine
+- ✅ Installiert Docker Compose
+- ✅ Startet alle Container
+- ✅ Zeigt Container-Status an
+
+Nach 30 Sekunden öffne: **http://YOUR_SERVER_IP:3000**
+
+---
+
+## 💻 Option B: macOS/Windows (Docker Desktop)
+
+### Voraussetzung: Docker Desktop installieren
+
+- **macOS**: [Download Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- **Windows**: [Download Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
 ### Step 1: Clone & Start 📦
 
@@ -20,15 +54,19 @@ docker-compose up -d
 
 Das war's! 🎉
 
-### Step 2: Öffne das Web-Interface 🌐
+---
+
+## 🌐 Step 2: Öffne das Web-Interface
 
 Warte ~30 Sekunden bis alle Container hochgefahren sind, dann:
 
 1. Öffne deinen Browser
-2. Gehe zu: **http://localhost:3000**
+2. Gehe zu: 
+   - **Lokal**: http://localhost:3000
+   - **Server**: http://YOUR_SERVER_IP:3000
 3. Du wirst automatisch zur Setup-Seite weitergeleitet
 
-### Step 3: Erstelle Admin-Account 👤
+## 👤 Step 3: Erstelle Admin-Account
 
 Auf der Setup-Seite:
 

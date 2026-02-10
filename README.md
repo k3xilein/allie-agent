@@ -18,21 +18,36 @@ Allie Agent ist ein produktionsorientierter Trading-Bot, der:
 
 ## 🚀 Schnellstart (3 Befehle!)
 
+### Option A: Linux Server (Ubuntu/Debian)
+
+**Automatische Installation mit einem Befehl:**
+
+```bash
+git clone https://github.com/k3xilein/allie-agent.git
+cd allie-agent
+sudo bash install-docker.sh  # Installiert Docker + startet App
+```
+
+### Option B: macOS/Windows (mit Docker Desktop)
+
+**Voraussetzung:** Docker Desktop installiert
+
 ```bash
 git clone https://github.com/k3xilein/allie-agent.git
 cd allie-agent
 docker-compose up -d
 ```
 
-**Das war's!** Öffne dann: **http://localhost:3000**
+**Das war's!** Öffne dann: **http://localhost:3000** (oder Server-IP)
 
 ### Was passiert automatisch?
 
-1. ✅ PostgreSQL Datenbank startet
-2. ✅ Alle Migrationen laufen automatisch
-3. ✅ Backend-Server startet (Port 4000)
-4. ✅ Frontend-Server startet (Port 3000)
-5. ✅ Setup-Page öffnet sich automatisch
+1. ✅ Docker & Docker Compose installiert (Linux Script)
+2. ✅ PostgreSQL Datenbank startet
+3. ✅ Alle Migrationen laufen automatisch
+4. ✅ Backend-Server startet (Port 4000)
+5. ✅ Frontend-Server startet (Port 3000)
+6. ✅ Setup-Page öffnet sich automatisch
 
 ### Nächste Schritte im Browser:
 
