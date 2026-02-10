@@ -40,6 +40,7 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
   'http://memero.store:5173',
+  'https://allie.memero.store',
   process.env.FRONTEND_URL,
 ].filter(Boolean);
 
