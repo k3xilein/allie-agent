@@ -1,14 +1,20 @@
 // Environment Configuration
 import dotenv from 'dotenv';
+import crypto from 'crypto';
 
 dotenv.config();
+
+// Auto-generate SESSION_SECRET if not provided
+const generateSessionSecret = () => {
+  return crypto.randomBytes(32).toString('hex');
+};
 
 export const config = {
   database: {
     url: process.env.DATABASE_URL || 'postgresql://localhost:5432/allie_agent',
   },
   session: {
-    secret: process.env.SESSION_SECRET || 'dev-secret-change-in-production',
+    secret: process.env.SESSION_SECRET || generateSessionSecret(),
     expirationHours: 24,
   },
   hyperliquid: {
@@ -35,13 +41,17 @@ export const config = {
 export function validateConfig() {
   const required = [
     'DATABASE_URL',
-    'SESSION_SECRET',
   ];
 
   const missing = required.filter(key => !process.env[key]);
   
   if (missing.length > 0) {
     throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+  }
+
+  // Info: SESSION_SECRET auto-generated if not provided
+  if (!process.env.SESSION_SECRET) {
+    console.warn('⚠ SESSION_SECRET not set - using auto-generated secret (sessions will reset on restart)');
   }
 
   // Warn if trading keys are missing (but don't block)
