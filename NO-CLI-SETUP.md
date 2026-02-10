@@ -13,26 +13,33 @@ Allie Agent kann jetzt **komplett ohne Terminal-Befehle** eingerichtet werden. A
 
 ## 🖥️ Option A: Linux Server (Ubuntu/Debian)
 
-**Ein einziger Befehl installiert alles automatisch!**
+### Fall 1: Docker noch nicht installiert
 
-### Step 1: Installation (Automatic) 🚀
+**Automatische Installation mit einem Befehl:**
 
 ```bash
-# Clone Repository
 git clone https://github.com/k3xilein/allie-agent.git
 cd allie-agent
-
-# Run installation script (installs Docker + starts app)
-sudo bash install-docker.sh
+sudo bash install-docker.sh  # Installiert Docker + startet App
 ```
 
-**Das war's!** Das Script:
-- ✅ Installiert Docker Engine
-- ✅ Installiert Docker Compose
-- ✅ Startet alle Container
-- ✅ Zeigt Container-Status an
+### Fall 2: Docker bereits installiert
 
-Nach 30 Sekunden öffne: **http://YOUR_SERVER_IP:3000**
+**Einfach starten:**
+
+```bash
+git clone https://github.com/k3xilein/allie-agent.git
+cd allie-agent
+bash start.sh  # Startet alle Container
+```
+
+Oder manuell:
+
+```bash
+docker compose up -d
+# oder falls alte Docker Version:
+docker-compose up -d
+```
 
 ---
 

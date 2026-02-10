@@ -20,7 +20,15 @@ Allie Agent ist ein produktionsorientierter Trading-Bot, der:
 
 ### Option A: Linux Server (Ubuntu/Debian)
 
-**Automatische Installation mit einem Befehl:**
+**Docker bereits installiert?**
+
+```bash
+git clone https://github.com/k3xilein/allie-agent.git
+cd allie-agent
+bash start.sh  # Startet alle Container
+```
+
+**Docker noch nicht installiert?**
 
 ```bash
 git clone https://github.com/k3xilein/allie-agent.git
