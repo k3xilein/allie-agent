@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: allie-agent-db
+    environment:
+      POSTGRES_DB: allie_agent
+      POSTGRES_USER: allie_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-allie_password}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U allie_user -d allie_agent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: allie-agent-backend
+    environment:
+      DATABASE_URL: postgresql://allie_user:${DB_PASSWORD:-allie_password}@postgres:5432/allie_agent
+      SESSION_SECRET: ${SESSION_SECRET}
+      HYPERLIQUID_API_KEY: ${HYPERLIQUID_API_KEY}
+      HYPERLIQUID_PRIVATE_KEY: ${HYPERLIQUID_PRIVATE_KEY}
+      HYPERLIQUID_TESTNET: ${HYPERLIQUID_TESTNET:-true}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      AI_MODEL: ${AI_MODEL:-moonshot/kimi-k2}
+      PORT: 4000
+      NODE_ENV: ${NODE_ENV:-production}
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - ./backend/logs:/app/logs
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:4000}
+        VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:4000}
+    container_name: allie-agent-frontend
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+    driver: local
+
+networks:
+  default:
+    name: allie-agent-network

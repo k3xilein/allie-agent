@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: allie-postgres-prod
+    environment:
+      POSTGRES_DB: allie_agent
+      POSTGRES_USER: allie_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata-prod:/var/lib/postgresql/data
+      - ./backend/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - allie-network
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U allie_user -d allie_agent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: allie-backend-prod
+    environment:
+      DATABASE_URL: postgresql://allie_user:${DB_PASSWORD}@postgres:5432/allie_agent
+      SESSION_SECRET: ${SESSION_SECRET}
+      HYPERLIQUID_API_KEY: ${HYPERLIQUID_API_KEY}
+      HYPERLIQUID_PRIVATE_KEY: ${HYPERLIQUID_PRIVATE_KEY}
+      HYPERLIQUID_TESTNET: ${HYPERLIQUID_TESTNET:-true}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      AI_MODEL: ${AI_MODEL:-moonshot/kimi-k2}
+      PORT: 4000
+      NODE_ENV: production
+      FRONTEND_URL: https://allie.memero.store
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - allie-network
+    restart: always
+    volumes:
+      - ./backend/logs:/app/logs
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    container_name: allie-frontend-prod
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+    networks:
+      - allie-network
+    restart: always
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - ./nginx.prod.conf:/etc/nginx/nginx.conf:ro
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  pgdata-prod:
+    driver: local
+
+networks:
+  allie-network:
+    driver: bridge
