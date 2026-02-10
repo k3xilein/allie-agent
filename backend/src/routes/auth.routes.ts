@@ -9,6 +9,11 @@ import { logger } from '../utils/logger';
 
 const router = Router();
 
+// Helper to get cookies (added by cookie-parser middleware)
+function getCookies(req: Request): any {
+  return (req as any).cookies;
+}
+
 // Setup - Initial admin account creation
 router.post('/setup', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -86,7 +91,8 @@ router.post('/login', loginLimiter, async (req: Request, res: Response): Promise
 // Logout
 router.post('/logout', requireAuth, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const token = req.cookies.session_token;
+    const cookies = getCookies(req);
+    const token = cookies.session_token;
     await authService.logout(token);
 
     res.clearCookie('session_token');
@@ -103,7 +109,8 @@ router.post('/logout', requireAuth, async (req: AuthRequest, res: Response): Pro
 // Validate session
 router.get('/session', async (req: Request, res: Response): Promise<void> => {
   try {
-    const token = req.cookies.session_token;
+    const cookies = getCookies(req);
+    const token = cookies.session_token;
     
     if (!token) {
       res.json({ authenticated: false });

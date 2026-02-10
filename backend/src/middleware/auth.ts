@@ -3,11 +3,24 @@ import { Request, Response, NextFunction } from 'express';
 import { authService } from '../services/AuthService';
 import { logger } from '../utils/logger';
 
+// Extend Express Request to include our auth properties
+declare global {
+  namespace Express {
+    interface Request {
+      userId?: number;
+      user?: any;
+    }
+  }
+}
+
 export interface AuthRequest extends Request {
   userId?: number;
   user?: any;
-  cookies?: any;
-  body?: any;
+}
+
+// Type assertion helper for cookies (added by cookie-parser middleware)
+function getCookies(req: Request): any {
+  return (req as any).cookies;
 }
 
 export async function requireAuth(
@@ -16,7 +29,8 @@ export async function requireAuth(
   next: NextFunction
 ): Promise<void> {
   try {
-    const token = req.cookies.session_token;
+    const cookies = getCookies(req);
+    const token = cookies.session_token;
 
     if (!token) {
       res.status(401).json({ success: false, error: 'Not authenticated' });
