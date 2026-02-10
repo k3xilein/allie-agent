@@ -9,10 +9,12 @@ import authRoutes from './routes/auth.routes';
 import dashboardRoutes from './routes/dashboard.routes';
 import agentRoutes from './routes/agent.routes';
 import settingsRoutes from './routes/settings.routes';
+import systemRoutes from './routes/system.routes';
 import { errorHandler } from './middleware/errorHandler';
 import { suspiciousActivityDetector, preventHPP, apiSecurityHeaders, sanitizeInput } from './middleware/security';
 import { logger } from './utils/logger';
 import { authService } from './services/AuthService';
+import { runMigrations } from './utils/migrations';
 
 const app = express();
 
@@ -73,6 +75,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/agent', agentRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/system', systemRoutes);
 app.use('/api/positions', dashboardRoutes); // Shares routes
 app.use('/api/trades', dashboardRoutes); // Shares routes
 
@@ -97,6 +100,11 @@ async function startServer() {
       throw new Error('Database connection failed');
     }
 
+    // Run database migrations automatically
+    logger.info('Running database migrations...');
+    await runMigrations();
+    logger.info('Database migrations completed');
+
     // Start session cleanup cron job (every hour)
     setInterval(() => {
       authService.cleanExpiredSessions().catch(err => 
@@ -110,6 +118,7 @@ async function startServer() {
       logger.info(`Environment: ${config.server.env}`);
       logger.info(`Testnet mode: ${config.hyperliquid.testnet}`);
       logger.info('Security features enabled: Helmet, CORS, Rate Limiting, Input Sanitization');
+      logger.info('✅ System ready - Visit http://localhost:3000/setup to create your admin account');
     });
   } catch (error) {
     logger.error('Failed to start server:', error);

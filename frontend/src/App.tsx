@@ -31,7 +31,7 @@ const App: React.FC = () => {
           path="/dashboard" 
           element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />} 
         />
-        <Route path="/" element={<Navigate to="/dashboard" />} />
+        <Route path="/" element={<Navigate to="/setup" />} />
       </Routes>
     </BrowserRouter>
   );

@@ -1,26 +1,81 @@
-# Allie Agent - Autonomous Crypto Trading Bot
+# Allie Agent - Autonomous Crypto Trading Bot 🤖
 
 Ein sicherer, KI-gestützter Trading-Agent für Kryptowährungen mit Web-UI, gebaut mit Node.js, React und PostgreSQL.
+
+> **🎉 NEU: Komplett ohne CLI-Befehle!** Alles erfolgt über das Web-Interface.
 
 ## 📋 Projekt-Übersicht
 
 Allie Agent ist ein produktionsorientierter Trading-Bot, der:
-- Autonomes Trading auf Hyperliquid (Testnet)
-- KI-gesteuerte Entscheidungen via Kimi K2 (OpenRouter)
-- Lernen aus Fehlern und Anpassung der Strategien
-- Vollständige Transparenz und manuelle Kontrolle
-- Emergency Kill Switch für Notfälle
+- ✅ Autonomes Trading auf Hyperliquid (Testnet)
+- 🤖 KI-gesteuerte Entscheidungen via Kimi K2 (OpenRouter)
+- 📈 Lernen aus Fehlern und Anpassung der Strategien
+- 🔍 Vollständige Transparenz und manuelle Kontrolle
+- 🚨 Emergency Kill Switch für Notfälle
+- 🌐 **Web-basiertes Setup ohne Terminal-Befehle**
 
-**Status:** MVP in Entwicklung
+**Status:** ✅ Production-Ready MVP
+
+## 🚀 Schnellstart (3 Befehle!)
+
+```bash
+git clone https://github.com/k3xilein/allie-agent.git
+cd allie-agent
+docker-compose up -d
+```
+
+**Das war's!** Öffne dann: **http://localhost:3000**
+
+### Was passiert automatisch?
+
+1. ✅ PostgreSQL Datenbank startet
+2. ✅ Alle Migrationen laufen automatisch
+3. ✅ Backend-Server startet (Port 4000)
+4. ✅ Frontend-Server startet (Port 3000)
+5. ✅ Setup-Page öffnet sich automatisch
+
+### Nächste Schritte im Browser:
+
+1. **Admin-Account erstellen** auf `/setup`
+2. **Login** mit deinen Credentials
+3. **Onboarding** durchlaufen (API Keys, Risk Management, Strategy)
+4. **Trading starten** im Dashboard
+
+📖 **Ausführliche Anleitung:** [NO-CLI-SETUP.md](./NO-CLI-SETUP.md)
 
 ## 🏗️ Architektur
 
 ```
-Frontend (React + TypeScript)
+Browser (http://localhost:3000)
     ↓
-Backend (Node.js + Express)
+Frontend (React + Vite)
+    ↓
+Backend (Node.js + Express + TypeScript)
     ↓
 PostgreSQL + Hyperliquid API + OpenRouter AI
+```
+
+### Automatischer Startup-Flow
+
+```
+docker-compose up -d
+    ↓
+PostgreSQL startet ✅
+    ↓
+Backend startet ✅
+    ↓
+Auto-Migrations laufen ✅
+    ├─ users
+    ├─ sessions
+    ├─ trades
+    ├─ ai_analyses
+    ├─ user_settings
+    └─ agent_state
+    ↓
+Frontend startet ✅
+    ↓
+System Ready! 🎉
+Open: http://localhost:3000
 ```
 
 ## 📂 Projektstruktur
@@ -32,56 +87,85 @@ allie-agent/
 │   │   ├── config/     # Konfiguration
 │   │   ├── services/   # Business-Logik
 │   │   ├── routes/     # API-Endpoints
-│   │   ├── middleware/ # Auth, Logging, etc.
+│   │   ├── middleware/ # Auth, Security, Logging
+│   │   ├── utils/      # Migrations, Logger
 │   │   └── models/     # TypeScript Types
-│   └── migrations/   # SQL Migrationen
+│   └── migrations/   # SQL Auto-Migrationen
 ├── frontend/         # React Frontend
 │   └── src/
-│       ├── pages/      # Login, Dashboard
-│       ├── components/ # UI-Komponenten
+│       ├── pages/      # Setup, Login, Dashboard, Onboarding, Settings
 │       ├── api/        # API-Client
-│       └── store/      # State Management
+│       └── store/      # Zustand State Management
 ├── docs/
 │   ├── features/     # Feature-Spezifikationen
 │   └── architecture/ # Technische Dokumentation
-└── docker-compose.yml
+├── docker-compose.yml      # Development Setup
+├── docker-compose.prod.yml # Production Setup
+└── NO-CLI-SETUP.md        # Setup-Anleitung
 ```
 
-## 🚀 Schnellstart
+## 🎯 Features
+
+### ✅ User Management
+- Web-basiertes Setup (kein CLI!)
+- Sichere Authentifizierung (bcrypt, Session-Tokens)
+- Onboarding Wizard für neue User
+- Settings-Page für Konfiguration
+
+### ✅ Trading Engine
+- Hyperliquid Integration (Testnet)
+- KI-Analysen via OpenRouter (Kimi K2)
+- 6-Agent-Workflow (Market, News, Sentiment, Signal, Risk, Execution)
+- Auto-Stop bei Daily Loss Limit
+
+### ✅ Security
+- AES-256-GCM Encryption für API Keys
+- Helmet.js Security Headers
+- CORS Whitelist
+- Rate Limiting
+- Input Sanitization
+- Session Management
+
+### ✅ Deployment
+- Docker Compose (Dev + Production)
+- Auto-Migrations beim Start
+- SSL/TLS mit Let's Encrypt
+- Nginx Reverse Proxy
+- Health Checks
+
+## 🔧 Manuelle Installation (Optional)
+
+Wenn du Docker nicht verwenden möchtest:
 
 ### Voraussetzungen
 - Node.js 20+
 - PostgreSQL 16
-- Docker (optional)
 
-### 1. Datenbank-Setup
+### 1. Datenbank
 
 ```bash
-# PostgreSQL starten
-docker run -d \
-  -e POSTGRES_DB=allie_agent \
-  -e POSTGRES_USER=allie_user \
-  -e POSTGRES_PASSWORD=your_password \
-  -p 5432:5432 \
-  postgres:16
+# PostgreSQL installieren
+brew install postgresql@16  # macOS
+# oder
+apt install postgresql-16   # Linux
+
+# Datenbank erstellen
+createdb allie_agent
 ```
 
-### 2. Backend-Setup
+### 2. Backend
 
 ```bash
 cd backend
 npm install
 cp .env.example .env
-# .env editieren mit deinen Keys
+# .env editieren
 
-# Migrationen ausführen
-npm run migrate
-
-# Development-Server
+# Server starten (Migrationen laufen automatisch!)
 npm run dev
 ```
 
-### 3. Frontend-Setup
+### 3. Frontend
 
 ```bash
 cd frontend
@@ -89,32 +173,38 @@ npm install
 npm run dev
 ```
 
-### 4. Mit Docker
-
-```bash
-docker-compose up --build
-```
-
 ## 🔑 Environment Variables
 
-### Backend (.env)
+**Wichtig:** API-Keys werden im Onboarding-Wizard konfiguriert, NICHT mehr in .env!
+
+### Backend (.env) - Minimal Config
 
 ```env
-DATABASE_URL=postgresql://user:pass@localhost:5432/allie_agent
-SESSION_SECRET=<generiere mit crypto.randomBytes(64).toString('hex')>
+# Datenbank (wird automatisch gesetzt bei Docker)
+DATABASE_URL=postgresql://allie:password@localhost:5432/allie_agent
 
-HYPERLIQUID_API_KEY=<your_api_key>
-HYPERLIQUID_PRIVATE_KEY=<your_private_key>
-HYPERLIQUID_TESTNET=true
+# Sessions (wird automatisch generiert)
+SESSION_SECRET=<auto-generated-on-first-start>
+ENCRYPTION_KEY=<auto-generated-on-first-start>
 
-OPENROUTER_API_KEY=<your_openrouter_key>
-AI_MODEL=moonshot/kimi-k2
-
+# Server
 PORT=4000
 NODE_ENV=development
+FRONTEND_URL=http://localhost:3000
+
+# Diese Werte werden im Onboarding konfiguriert:
+# - HYPERLIQUID_API_KEY
+# - HYPERLIQUID_PRIVATE_KEY
+# - OPENROUTER_API_KEY
 ```
 
 ## 📖 Dokumentation
+
+### Quick Guides
+- 🚀 [**NO-CLI-SETUP.md**](./NO-CLI-SETUP.md) - Kompletter Setup ohne Terminal
+- 🔐 [**SECURITY-AUDIT.md**](./SECURITY-AUDIT.md) - Security Best Practices
+- 🚢 [**DEPLOYMENT-GUIDE.md**](./DEPLOYMENT-GUIDE.md) - Production Deployment
+- ⚙️ [**ONBOARDING-SETTINGS.md**](./ONBOARDING-SETTINGS.md) - Onboarding & Settings Features
 
 ### Feature-Spezifikationen
 - [ALLIE-1: User Authentication](docs/features/ALLIE-1-user-authentication.md)
