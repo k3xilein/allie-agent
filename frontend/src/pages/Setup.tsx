@@ -8,7 +8,6 @@ export const Setup: React.FC = () => {
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isInitialized, setIsInitialized] = useState<boolean | null>(null);
   const [dbStatus, setDbStatus] = useState<'checking' | 'ready' | 'error'>('checking');
 
   const setupAdmin = useAuthStore(state => state.setupAdmin);
@@ -34,7 +33,6 @@ export const Setup: React.FC = () => {
           // System already has users, redirect to login
           navigate('/login');
         } else {
-          setIsInitialized(false);
           setDbStatus('ready');
         }
       } catch (err) {
