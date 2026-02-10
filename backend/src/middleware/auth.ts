@@ -4,12 +4,10 @@ import { authService } from '../services/AuthService';
 import { logger } from '../utils/logger';
 
 export interface AuthRequest extends Request {
+  userId?: number;
   user?: any;
-  body: any;
-  query: any;
-  params: any;
-  cookies: any;
-  ip?: string;
+  cookies?: any;
+  body?: any;
 }
 
 export async function requireAuth(
@@ -34,9 +32,13 @@ export async function requireAuth(
     }
 
     req.user = user;
+    req.userId = user.id;
     next();
   } catch (error) {
     logger.error('Auth middleware error', { error });
     res.status(500).json({ success: false, error: 'Authentication error' });
   }
 }
+
+// Alias for compatibility
+export const authenticateSession = requireAuth;

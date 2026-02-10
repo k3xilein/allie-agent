@@ -1,13 +1,13 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { SettingsService } from '../services/SettingsService';
-import { authenticateSession } from '../middleware/auth';
+import { requireAuth, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
 // GET /api/settings - Get user settings
-router.get('/', authenticateSession, async (req, res) => {
+router.get('/', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId!;
     const settings = await SettingsService.getSettings(userId);
     
     res.json(settings);
@@ -18,9 +18,9 @@ router.get('/', authenticateSession, async (req, res) => {
 });
 
 // PUT /api/settings - Update settings
-router.put('/', authenticateSession, async (req, res) => {
+router.put('/', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId!;
     const settingsData = req.body;
     
     const updated = await SettingsService.updateSettings(userId, settingsData);
@@ -33,9 +33,9 @@ router.put('/', authenticateSession, async (req, res) => {
 });
 
 // POST /api/settings/onboarding - Save initial onboarding settings
-router.post('/onboarding', authenticateSession, async (req, res) => {
+router.post('/onboarding', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
-    const userId = (req as any).userId;
+    const userId = req.userId!;
     const settingsData = req.body;
     
     // Mark onboarding as completed
