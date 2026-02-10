@@ -51,7 +51,7 @@ services:
         VITE_WS_URL: ${VITE_WS_URL:-ws://localhost:4000}
     container_name: allie-agent-frontend
     ports:
-      - "8080:80"
+      - "5173:80"
     depends_on:
       - backend
     restart: unless-stopped
