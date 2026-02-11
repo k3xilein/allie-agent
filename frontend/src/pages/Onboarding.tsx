@@ -6,7 +6,6 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Bot,
   Shield,
   Scale,
   Zap,
@@ -19,6 +18,7 @@ import {
   Info,
   AlertTriangle,
   ArrowRight,
+  Cpu,
 } from 'lucide-react';
 
 interface OnboardingStep {
@@ -92,8 +92,8 @@ export const Onboarding: React.FC = () => {
       case 0:
         return (
           <div className="text-center py-6">
-            <div className="w-20 h-20 rounded-2xl bg-white/[0.06] border border-white/[0.08] mx-auto flex items-center justify-center mb-6">
-              <Bot className="w-10 h-10 text-white/80" />
+            <div className="w-20 h-20 rounded-2xl bg-white/[0.06] border border-white/[0.08] mx-auto flex items-center justify-center mb-6 overflow-hidden">
+              <img src="/logo.png" alt="Allie Agent" className="w-16 h-16 drop-shadow-lg" />
             </div>
             <h2 className="text-2xl font-bold text-white mb-3">
               Hello, {user?.username}
@@ -104,7 +104,7 @@ export const Onboarding: React.FC = () => {
             <div className="mt-8 grid grid-cols-3 gap-3 max-w-sm mx-auto">
               {[
                 { icon: Lock, label: 'Secure' },
-                { icon: Bot, label: 'AI-Powered' },
+                { icon: Cpu, label: 'AI-Powered' },
                 { icon: TrendingUp, label: '24/7 Trading' },
               ].map((item) => (
                 <div key={item.label} className="bg-white/[0.04] border border-white/[0.06] rounded-xl p-4 flex flex-col items-center gap-2">

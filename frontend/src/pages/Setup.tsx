@@ -6,7 +6,7 @@ import { GlassCard } from '@/components/ui/shared';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { Bot, AlertTriangle, Info, Loader2 } from 'lucide-react';
+import { AlertTriangle, Info, Loader2 } from 'lucide-react';
 
 export const Setup: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -67,7 +67,10 @@ export const Setup: React.FC = () => {
         <BackgroundPaths />
         <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
           <GlassCard className="p-8 w-full max-w-md text-center">
-            <Loader2 className="w-10 h-10 text-white/40 animate-spin mx-auto mb-4" />
+            <div className="relative w-14 h-14 mx-auto mb-4">
+              <img src="/logo.png" alt="Allie Agent" className="w-14 h-14 drop-shadow-lg" />
+              <Loader2 className="w-6 h-6 text-white/40 animate-spin absolute -bottom-1 -right-1" />
+            </div>
             <h2 className="text-lg font-semibold text-white mb-1">Initializing System</h2>
             <p className="text-sm text-white/30">Checking database and running migrations</p>
           </GlassCard>
@@ -128,8 +131,8 @@ export const Setup: React.FC = () => {
           <GlassCard className="p-8">
             {/* Header */}
             <div className="text-center mb-6">
-              <div className="w-16 h-16 rounded-2xl bg-white/[0.06] border border-white/[0.08] mx-auto flex items-center justify-center mb-4">
-                <Bot className="w-8 h-8 text-white/70" />
+              <div className="w-16 h-16 rounded-2xl bg-white/[0.06] border border-white/[0.08] mx-auto flex items-center justify-center mb-4 overflow-hidden">
+                <img src="/logo.png" alt="Allie Agent" className="w-12 h-12 drop-shadow-lg" />
               </div>
               <h1 className="text-2xl font-bold text-white mb-1">Welcome to Allie Agent</h1>
               <p className="text-sm text-white/30">Create your admin account to get started</p>

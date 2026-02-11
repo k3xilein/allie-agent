@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   Settings,
   LogOut,
-  Bot,
 } from 'lucide-react';
 
 interface AppShellProps {
@@ -43,8 +42,8 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
         {/* Logo */}
         <div className="px-5 py-6 border-b border-white/[0.06]">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-white/15 to-white/5 border border-white/10 flex items-center justify-center">
-              <Bot className="w-5 h-5 text-white" />
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-white/15 to-white/5 border border-white/10 flex items-center justify-center overflow-hidden">
+              <img src="/logo.png" alt="Allie Agent" className="w-7 h-7 drop-shadow-md" />
             </div>
             <div>
               <span className="text-white font-semibold text-sm tracking-tight">Allie Agent</span>

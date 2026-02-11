@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { BackgroundPaths } from '@/components/ui/background-paths';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Bot, Lock, User, AlertCircle, ArrowRight } from 'lucide-react';
+import { Lock, User, AlertCircle, ArrowRight } from 'lucide-react';
 
 export const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -48,7 +48,7 @@ export const Login: React.FC = () => {
               transition={{ delay: 0.2, type: 'spring', stiffness: 200, damping: 15 }}
               className="w-14 h-14 rounded-2xl bg-gradient-to-br from-white/20 to-white/5 border border-white/10 flex items-center justify-center backdrop-blur-sm"
             >
-              <Bot className="w-8 h-8 text-white" />
+              <img src="/logo.png" alt="Allie Agent" className="w-10 h-10 drop-shadow-lg" />
             </motion.div>
           </div>
           
