@@ -20,7 +20,8 @@ export const config = {
   hyperliquid: {
     apiKey: process.env.HYPERLIQUID_API_KEY || '',
     privateKey: process.env.HYPERLIQUID_PRIVATE_KEY || '',
-    testnet: process.env.HYPERLIQUID_TESTNET === 'true',
+    walletAddress: process.env.HYPERLIQUID_WALLET_ADDRESS || '',
+    testnet: process.env.HYPERLIQUID_TESTNET !== 'false', // Default true for safety
   },
   ai: {
     apiKey: process.env.OPENROUTER_API_KEY || '',
@@ -31,9 +32,20 @@ export const config = {
     env: process.env.NODE_ENV || 'development',
   },
   trading: {
-    analysisIntervalMinutes: 5,
-    maxPositionSizePercent: 10, // Max 10% of balance per trade
-    minConfidence: 70, // Min AI confidence to execute trade
+    symbol: process.env.TRADING_SYMBOL || 'BTC-PERP',
+    analysisIntervalMinutes: parseInt(process.env.ANALYSIS_INTERVAL || '5', 10),
+    maxPositionSizePercent: parseFloat(process.env.MAX_POSITION_SIZE_PCT || '10'),
+    maxDailyLossPercent: parseFloat(process.env.MAX_DAILY_LOSS_PCT || '5'),
+    maxDrawdownPercent: parseFloat(process.env.MAX_DRAWDOWN_PCT || '15'),
+    maxLeverage: parseInt(process.env.MAX_LEVERAGE || '5', 10),
+    maxPositions: parseInt(process.env.MAX_POSITIONS || '3', 10),
+    minConfidence: parseInt(process.env.MIN_CONFIDENCE || '70', 10),
+    minRiskRewardRatio: parseFloat(process.env.MIN_RISK_REWARD || '1.5'),
+    maxConsecutiveLosses: parseInt(process.env.MAX_CONSECUTIVE_LOSSES || '3', 10),
+    cooldownMinutes: parseInt(process.env.COOLDOWN_MINUTES || '30', 10),
+    maxSlippagePercent: parseFloat(process.env.MAX_SLIPPAGE_PCT || '0.5'),
+    stopLossPercent: parseFloat(process.env.DEFAULT_STOP_LOSS_PCT || '2'),
+    takeProfitPercent: parseFloat(process.env.DEFAULT_TAKE_PROFIT_PCT || '4'),
   },
 };
 

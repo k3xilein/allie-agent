@@ -27,6 +27,7 @@
     "axios": "^1.6.5",
     "node-cron": "^3.0.3",
     "helmet": "^7.1.0",
+    "hyperliquid": "^1.7.7",
     "express-mongo-sanitize": "^2.2.0",
     "xss-clean": "^0.1.4"
   },

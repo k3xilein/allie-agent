@@ -35,6 +35,10 @@ router.post('/start', async (req: AuthRequest, res: Response): Promise<void> => 
     }
 
     await agentStateService.updateStatus('running');
+    
+    // Start the trading engine loop
+    await tradingService.startEngine();
+    
     await loggingService.logSystemEvent('AGENT_START', 'INFO', {}, req.user.id);
     await loggingService.logAuditAction('START', req.user.id, 'SUCCESS', req.ip);
 
@@ -63,6 +67,9 @@ router.post('/stop', async (req: AuthRequest, res: Response): Promise<void> => {
     }
 
     await agentStateService.updateStatus('stopped');
+    
+    // Stop the trading engine loop (positions remain open)
+    await tradingService.stopEngine();
     
     const activePositions = await tradingService.getActivePositions();
     
@@ -93,8 +100,8 @@ router.post('/emergency-stop', async (req: AuthRequest, res: Response): Promise<
       return;
     }
 
-    // Close all positions
-    const closeResult = await tradingService.closeAllPositions();
+    // Close all positions and stop engine
+    const closeResult = await tradingService.emergencyStop();
 
     // Set emergency status
     await agentStateService.updateStatus('emergency_stop');
@@ -170,14 +177,16 @@ router.post('/reset-emergency', async (req: AuthRequest, res: Response): Promise
 router.get('/status', async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const state = await agentStateService.getState();
+    const engineStatus = tradingService.getEngineStatus();
 
     res.json({
       status: state.status,
+      engine: engineStatus,
       uptime: state.last_analysis_at ? 
         Math.floor((Date.now() - new Date(state.last_analysis_at).getTime()) / 1000) : 
         0,
       lastAction: {
-        action: 'start', // Would track from logs
+        action: 'start',
         timestamp: state.updated_at,
         user: 'admin',
       },
