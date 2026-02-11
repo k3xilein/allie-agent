@@ -1,6 +1,25 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useStore';
+import { GlassCard, SliderField, Toggle } from '@/components/ui/shared';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Bot,
+  Shield,
+  Scale,
+  Zap,
+  Lock,
+  TrendingUp,
+  CheckCircle2,
+  ChevronRight,
+  ChevronLeft,
+  Crosshair,
+  Info,
+  AlertTriangle,
+  ArrowRight,
+} from 'lucide-react';
 
 interface OnboardingStep {
   title: string;
@@ -8,53 +27,34 @@ interface OnboardingStep {
 }
 
 const steps: OnboardingStep[] = [
-  {
-    title: 'Willkommen bei Allie Agent',
-    description: 'Lass uns deinen Trading-Bot in wenigen Schritten einrichten.',
-  },
-  {
-    title: 'API-Keys konfigurieren',
-    description: 'Verbinde deine Exchange- und AI-APIs für automatisches Trading.',
-  },
-  {
-    title: 'Risk Management',
-    description: 'Definiere deine Risiko-Parameter und Trading-Limits.',
-  },
-  {
-    title: 'Trading-Strategie',
-    description: 'Wähle deine bevorzugte Trading-Strategie und Zeitrahmen.',
-  },
-  {
-    title: 'Bereit zum Start!',
-    description: 'Alles eingerichtet. Du kannst jetzt mit dem Trading beginnen.',
-  },
+  { title: 'Welcome to Allie Agent', description: 'Set up your trading bot in a few steps.' },
+  { title: 'API Keys', description: 'Connect your exchange and AI APIs for automated trading.' },
+  { title: 'Risk Management', description: 'Define your risk parameters and trading limits.' },
+  { title: 'Trading Strategy', description: 'Choose your preferred strategy and timeframe.' },
+  { title: 'Ready to Go', description: 'Everything is configured. Start trading now.' },
 ];
 
 export const Onboarding: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const [currentStep, setCurrentStep] = useState(0);
-  
-  // Step 2: API Keys
+
   const [hyperliquidApiKey, setHyperliquidApiKey] = useState('');
   const [hyperliquidPrivateKey, setHyperliquidPrivateKey] = useState('');
   const [openrouterApiKey, setOpenrouterApiKey] = useState('');
   const [useTestnet, setUseTestnet] = useState(true);
-  
-  // Step 3: Risk Management
+
   const [maxPositionSize, setMaxPositionSize] = useState(10);
   const [maxDailyLoss, setMaxDailyLoss] = useState(5);
   const [stopLossPercent, setStopLossPercent] = useState(2);
   const [takeProfitPercent, setTakeProfitPercent] = useState(5);
-  
-  // Step 4: Strategy
+
   const [strategy, setStrategy] = useState('conservative');
   const [timeframe, setTimeframe] = useState('15m');
   const [minConfidence, setMinConfidence] = useState(70);
 
   const handleNext = async () => {
     if (currentStep === steps.length - 1) {
-      // Save all settings
       try {
         await fetch('/api/settings/onboarding', {
           method: 'POST',
@@ -62,30 +62,14 @@ export const Onboarding: React.FC = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             apiKeys: {
-              hyperliquid: {
-                apiKey: hyperliquidApiKey,
-                privateKey: hyperliquidPrivateKey,
-                testnet: useTestnet,
-              },
-              openrouter: {
-                apiKey: openrouterApiKey,
-              },
+              hyperliquid: { apiKey: hyperliquidApiKey, privateKey: hyperliquidPrivateKey, testnet: useTestnet },
+              openrouter: { apiKey: openrouterApiKey },
             },
-            riskManagement: {
-              maxPositionSize,
-              maxDailyLoss,
-              stopLossPercent,
-              takeProfitPercent,
-            },
-            strategy: {
-              type: strategy,
-              timeframe,
-              minConfidence,
-            },
+            riskManagement: { maxPositionSize, maxDailyLoss, stopLossPercent, takeProfitPercent },
+            strategy: { type: strategy, timeframe, minConfidence },
             onboardingCompleted: true,
           }),
         });
-        
         navigate('/dashboard');
       } catch (error) {
         console.error('Failed to save onboarding settings:', error);
@@ -95,40 +79,39 @@ export const Onboarding: React.FC = () => {
     }
   };
 
-  const handleSkip = () => {
-    navigate('/dashboard');
-  };
+  const handleSkip = () => navigate('/dashboard');
+
+  const strategyOptions = [
+    { id: 'conservative', label: 'Conservative', desc: 'Lower risk, fewer trades', icon: Shield },
+    { id: 'balanced', label: 'Balanced', desc: 'Balanced risk/reward', icon: Scale },
+    { id: 'aggressive', label: 'Aggressive', desc: 'Higher risk, more trades', icon: Zap },
+  ];
 
   const renderStepContent = () => {
     switch (currentStep) {
       case 0:
         return (
-          <div className="text-center py-8">
-            <div className="mb-6">
-              <div className="w-24 h-24 bg-blue-600 rounded-full mx-auto flex items-center justify-center">
-                <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
+          <div className="text-center py-6">
+            <div className="w-20 h-20 rounded-2xl bg-white/[0.06] border border-white/[0.08] mx-auto flex items-center justify-center mb-6">
+              <Bot className="w-10 h-10 text-white/80" />
             </div>
-            <h2 className="text-3xl font-bold text-white mb-4">Hallo, {user?.username}!</h2>
-            <p className="text-gray-300 text-lg max-w-md mx-auto">
-              Willkommen bei Allie Agent, deinem KI-gestützten Trading-Assistenten. 
-              Lass uns zusammen dein Trading-Setup konfigurieren.
+            <h2 className="text-2xl font-bold text-white mb-3">
+              Hello, {user?.username}
+            </h2>
+            <p className="text-white/40 max-w-sm mx-auto leading-relaxed">
+              Welcome to Allie Agent, your AI-powered trading assistant. Let's configure your trading setup together.
             </p>
-            <div className="mt-8 grid grid-cols-3 gap-4 max-w-md mx-auto">
-              <div className="bg-slate-700 rounded-lg p-4">
-                <div className="text-2xl mb-2">🔐</div>
-                <div className="text-sm text-gray-300">Sicher</div>
-              </div>
-              <div className="bg-slate-700 rounded-lg p-4">
-                <div className="text-2xl mb-2">🤖</div>
-                <div className="text-sm text-gray-300">KI-Powered</div>
-              </div>
-              <div className="bg-slate-700 rounded-lg p-4">
-                <div className="text-2xl mb-2">📈</div>
-                <div className="text-sm text-gray-300">24/7 Trading</div>
-              </div>
+            <div className="mt-8 grid grid-cols-3 gap-3 max-w-sm mx-auto">
+              {[
+                { icon: Lock, label: 'Secure' },
+                { icon: Bot, label: 'AI-Powered' },
+                { icon: TrendingUp, label: '24/7 Trading' },
+              ].map((item) => (
+                <div key={item.label} className="bg-white/[0.04] border border-white/[0.06] rounded-xl p-4 flex flex-col items-center gap-2">
+                  <item.icon className="w-5 h-5 text-white/50" />
+                  <span className="text-xs text-white/40">{item.label}</span>
+                </div>
+              ))}
             </div>
           </div>
         );
@@ -137,80 +120,41 @@ export const Onboarding: React.FC = () => {
         return (
           <div className="space-y-6">
             <div>
-              <h3 className="text-xl font-semibold text-white mb-4">Exchange API (Hyperliquid)</h3>
-              <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-white/70 mb-3 flex items-center gap-2">
+                <Crosshair className="w-3.5 h-3.5" /> Hyperliquid Exchange
+              </h3>
+              <div className="space-y-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    API Key
-                  </label>
-                  <input
-                    type="password"
-                    value={hyperliquidApiKey}
-                    onChange={(e) => setHyperliquidApiKey(e.target.value)}
-                    placeholder="Optional - kann später hinzugefügt werden"
-                    className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
+                  <label className="text-xs font-medium text-white/40 uppercase tracking-wider mb-1.5 block">API Key</label>
+                  <Input type="password" value={hyperliquidApiKey} onChange={(e) => setHyperliquidApiKey(e.target.value)} placeholder="Optional — can be added later" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Private Key
-                  </label>
-                  <input
-                    type="password"
-                    value={hyperliquidPrivateKey}
-                    onChange={(e) => setHyperliquidPrivateKey(e.target.value)}
-                    placeholder="Optional - kann später hinzugefügt werden"
-                    className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
+                  <label className="text-xs font-medium text-white/40 uppercase tracking-wider mb-1.5 block">Private Key</label>
+                  <Input type="password" value={hyperliquidPrivateKey} onChange={(e) => setHyperliquidPrivateKey(e.target.value)} placeholder="Optional — can be added later" />
                 </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="testnet"
-                    checked={useTestnet}
-                    onChange={(e) => setUseTestnet(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 bg-slate-700 border-gray-600 rounded focus:ring-blue-500"
-                  />
-                  <label htmlFor="testnet" className="ml-2 text-sm text-gray-300">
-                    Testnet verwenden (empfohlen für erste Tests)
-                  </label>
+                <div className="flex items-center gap-3 pt-1">
+                  <Toggle checked={useTestnet} onChange={setUseTestnet} />
+                  <span className="text-sm text-white/50">Use Testnet (recommended for initial testing)</span>
                 </div>
               </div>
             </div>
 
-            <div>
-              <h3 className="text-xl font-semibold text-white mb-4">AI API (OpenRouter)</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    OpenRouter API Key
-                  </label>
-                  <input
-                    type="password"
-                    value={openrouterApiKey}
-                    onChange={(e) => setOpenrouterApiKey(e.target.value)}
-                    placeholder="Optional - kann später hinzugefügt werden"
-                    className="w-full px-4 py-2 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                  <p className="text-xs text-gray-400 mt-1">
-                    Für KI-gestützte Trading-Entscheidungen (Kimi K2 Model)
-                  </p>
-                </div>
+            <div className="border-t border-white/[0.06] pt-5">
+              <h3 className="text-sm font-semibold text-white/70 mb-3 flex items-center gap-2">
+                <Zap className="w-3.5 h-3.5" /> OpenRouter AI
+              </h3>
+              <div>
+                <label className="text-xs font-medium text-white/40 uppercase tracking-wider mb-1.5 block">API Key</label>
+                <Input type="password" value={openrouterApiKey} onChange={(e) => setOpenrouterApiKey(e.target.value)} placeholder="Optional — can be added later" />
+                <p className="text-xs text-white/25 mt-1.5">For AI-powered trading decisions (Kimi K2 Model)</p>
               </div>
             </div>
 
-            <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4">
-              <div className="flex items-start">
-                <svg className="w-5 h-5 text-blue-400 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                </svg>
-                <div className="text-sm text-blue-200">
-                  <p className="font-medium">Hinweis</p>
-                  <p className="mt-1">
-                    Du kannst diese Einstellungen überspringen und später in den Einstellungen hinzufügen. 
-                    Ohne API-Keys läuft der Bot im Demo-Modus.
-                  </p>
-                </div>
+            <div className="bg-blue-500/[0.06] border border-blue-500/10 rounded-xl p-4 flex items-start gap-3">
+              <Info className="w-4 h-4 text-blue-400/70 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-blue-200/60">
+                <p className="font-medium text-blue-200/80">Note</p>
+                <p className="mt-1">You can skip these and add them later in Settings. Without API keys the bot runs in demo mode.</p>
               </div>
             </div>
           </div>
@@ -218,94 +162,17 @@ export const Onboarding: React.FC = () => {
 
       case 2:
         return (
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Max. Position Size (% des Portfolios)
-              </label>
-              <div className="flex items-center space-x-4">
-                <input
-                  type="range"
-                  min="1"
-                  max="50"
-                  value={maxPositionSize}
-                  onChange={(e) => setMaxPositionSize(Number(e.target.value))}
-                  className="flex-1"
-                />
-                <span className="text-white font-semibold w-16 text-right">{maxPositionSize}%</span>
-              </div>
-              <p className="text-xs text-gray-400 mt-1">
-                Maximaler Anteil deines Portfolios pro Position
-              </p>
-            </div>
+          <div className="space-y-5">
+            <SliderField label="Max Position Size" value={maxPositionSize} onChange={setMaxPositionSize} min={1} max={50} hint="Maximum portfolio percentage per position" />
+            <SliderField label="Max Daily Loss" value={maxDailyLoss} onChange={setMaxDailyLoss} min={1} max={20} hint="Trading stops when this daily loss is reached" />
+            <SliderField label="Stop Loss" value={stopLossPercent} onChange={setStopLossPercent} min={0.5} max={10} step={0.5} />
+            <SliderField label="Take Profit" value={takeProfitPercent} onChange={setTakeProfitPercent} min={1} max={20} step={0.5} />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Max. Daily Loss (% des Portfolios)
-              </label>
-              <div className="flex items-center space-x-4">
-                <input
-                  type="range"
-                  min="1"
-                  max="20"
-                  value={maxDailyLoss}
-                  onChange={(e) => setMaxDailyLoss(Number(e.target.value))}
-                  className="flex-1"
-                />
-                <span className="text-white font-semibold w-16 text-right">{maxDailyLoss}%</span>
-              </div>
-              <p className="text-xs text-gray-400 mt-1">
-                Bot stoppt bei Erreichen dieses täglichen Verlusts
-              </p>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Stop Loss (%)
-              </label>
-              <div className="flex items-center space-x-4">
-                <input
-                  type="range"
-                  min="0.5"
-                  max="10"
-                  step="0.5"
-                  value={stopLossPercent}
-                  onChange={(e) => setStopLossPercent(Number(e.target.value))}
-                  className="flex-1"
-                />
-                <span className="text-white font-semibold w-16 text-right">{stopLossPercent}%</span>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Take Profit (%)
-              </label>
-              <div className="flex items-center space-x-4">
-                <input
-                  type="range"
-                  min="1"
-                  max="20"
-                  step="0.5"
-                  value={takeProfitPercent}
-                  onChange={(e) => setTakeProfitPercent(Number(e.target.value))}
-                  className="flex-1"
-                />
-                <span className="text-white font-semibold w-16 text-right">{takeProfitPercent}%</span>
-              </div>
-            </div>
-
-            <div className="bg-yellow-900/30 border border-yellow-500/50 rounded-lg p-4">
-              <div className="flex items-start">
-                <svg className="w-5 h-5 text-yellow-400 mt-0.5 mr-3" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                <div className="text-sm text-yellow-200">
-                  <p className="font-medium">Wichtig</p>
-                  <p className="mt-1">
-                    Conservative Settings für Anfänger empfohlen: Max Position 5-10%, Max Daily Loss 3-5%
-                  </p>
-                </div>
+            <div className="bg-amber-500/[0.06] border border-amber-500/10 rounded-xl p-4 flex items-start gap-3">
+              <AlertTriangle className="w-4 h-4 text-amber-400/70 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-amber-200/60">
+                <p className="font-medium text-amber-200/80">Recommendation</p>
+                <p className="mt-1">Conservative settings for beginners: Max Position 5-10%, Max Daily Loss 3-5%</p>
               </div>
             </div>
           </div>
@@ -315,131 +182,92 @@ export const Onboarding: React.FC = () => {
         return (
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-3">
-                Trading-Strategie
-              </label>
+              <label className="text-xs font-medium text-white/40 uppercase tracking-wider mb-3 block">Strategy Type</label>
               <div className="grid grid-cols-3 gap-3">
-                {['conservative', 'balanced', 'aggressive'].map((strat) => (
-                  <button
-                    key={strat}
-                    onClick={() => setStrategy(strat)}
-                    className={`p-4 rounded-lg border-2 transition-all ${
-                      strategy === strat
-                        ? 'border-blue-500 bg-blue-600/20'
-                        : 'border-slate-600 bg-slate-700 hover:border-slate-500'
-                    }`}
-                  >
-                    <div className="text-2xl mb-2">
-                      {strat === 'conservative' && '🛡️'}
-                      {strat === 'balanced' && '⚖️'}
-                      {strat === 'aggressive' && '🚀'}
-                    </div>
-                    <div className="text-white font-medium capitalize">{strat}</div>
-                    <div className="text-xs text-gray-400 mt-1">
-                      {strat === 'conservative' && 'Weniger Trades, höhere Sicherheit'}
-                      {strat === 'balanced' && 'Ausgewogenes Risiko/Ertrag'}
-                      {strat === 'aggressive' && 'Mehr Trades, höheres Risiko'}
-                    </div>
-                  </button>
-                ))}
+                {strategyOptions.map((strat) => {
+                  const Icon = strat.icon;
+                  const isActive = strategy === strat.id;
+                  return (
+                    <button
+                      key={strat.id}
+                      onClick={() => setStrategy(strat.id)}
+                      className={`p-4 rounded-xl border transition-all duration-200 text-left ${
+                        isActive
+                          ? 'bg-white/[0.08] border-white/[0.15] shadow-lg shadow-black/10'
+                          : 'bg-white/[0.02] border-white/[0.06] hover:bg-white/[0.04] hover:border-white/[0.1]'
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center mb-3 ${isActive ? 'bg-white/[0.1]' : 'bg-white/[0.04]'}`}>
+                        <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-white/40'}`} />
+                      </div>
+                      <div className={`text-sm font-medium ${isActive ? 'text-white' : 'text-white/50'}`}>{strat.label}</div>
+                      <div className="text-xs text-white/25 mt-0.5">{strat.desc}</div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-3">
-                Zeitrahmen
-              </label>
-              <div className="grid grid-cols-4 gap-3">
+              <label className="text-xs font-medium text-white/40 uppercase tracking-wider mb-3 block">Timeframe</label>
+              <div className="grid grid-cols-4 gap-2">
                 {['5m', '15m', '1h', '4h'].map((tf) => (
                   <button
                     key={tf}
                     onClick={() => setTimeframe(tf)}
-                    className={`py-3 px-4 rounded-lg border-2 transition-all ${
+                    className={`py-2.5 rounded-xl border text-sm font-medium transition-all duration-200 ${
                       timeframe === tf
-                        ? 'border-blue-500 bg-blue-600/20 text-white'
-                        : 'border-slate-600 bg-slate-700 text-gray-300 hover:border-slate-500'
+                        ? 'bg-white/[0.08] border-white/[0.15] text-white'
+                        : 'bg-white/[0.02] border-white/[0.06] text-white/40 hover:bg-white/[0.04] hover:text-white/60'
                     }`}
                   >
                     {tf}
                   </button>
                 ))}
               </div>
-              <p className="text-xs text-gray-400 mt-2">
-                Analyse-Intervall für Trading-Entscheidungen
-              </p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                Minimale KI-Konfidenz (%)
-              </label>
-              <div className="flex items-center space-x-4">
-                <input
-                  type="range"
-                  min="50"
-                  max="95"
-                  step="5"
-                  value={minConfidence}
-                  onChange={(e) => setMinConfidence(Number(e.target.value))}
-                  className="flex-1"
-                />
-                <span className="text-white font-semibold w-16 text-right">{minConfidence}%</span>
-              </div>
-              <p className="text-xs text-gray-400 mt-1">
-                Nur Trades mit mindestens dieser KI-Konfidenz werden ausgeführt
-              </p>
-            </div>
+            <SliderField
+              label="Min AI Confidence"
+              value={minConfidence}
+              onChange={setMinConfidence}
+              min={50} max={95} step={5}
+              hint="Only trades with at least this AI confidence will be executed"
+            />
           </div>
         );
 
       case 4:
         return (
-          <div className="text-center py-8">
-            <div className="mb-6">
-              <div className="w-24 h-24 bg-green-600 rounded-full mx-auto flex items-center justify-center">
-                <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
+          <div className="text-center py-6">
+            <div className="w-20 h-20 rounded-2xl bg-emerald-500/[0.1] border border-emerald-500/20 mx-auto flex items-center justify-center mb-6">
+              <CheckCircle2 className="w-10 h-10 text-emerald-400" />
             </div>
-            <h2 className="text-3xl font-bold text-white mb-4">Setup abgeschlossen!</h2>
-            <p className="text-gray-300 text-lg max-w-md mx-auto mb-8">
-              Dein Trading-Bot ist jetzt konfiguriert und bereit zum Start.
+            <h2 className="text-2xl font-bold text-white mb-3">Setup Complete</h2>
+            <p className="text-white/40 max-w-sm mx-auto mb-8">
+              Your trading bot is configured and ready to start.
             </p>
-            
-            <div className="bg-slate-800 rounded-lg p-6 max-w-md mx-auto">
-              <h3 className="text-lg font-semibold text-white mb-4">Deine Einstellungen:</h3>
-              <div className="space-y-3 text-left">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Strategie:</span>
-                  <span className="text-white font-medium capitalize">{strategy}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Zeitrahmen:</span>
-                  <span className="text-white font-medium">{timeframe}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Max Position:</span>
-                  <span className="text-white font-medium">{maxPositionSize}%</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Max Daily Loss:</span>
-                  <span className="text-white font-medium">{maxDailyLoss}%</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Min. Konfidenz:</span>
-                  <span className="text-white font-medium">{minConfidence}%</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-400">Testnet:</span>
-                  <span className="text-white font-medium">{useTestnet ? 'Ja' : 'Nein'}</span>
-                </div>
-              </div>
-            </div>
 
-            <p className="text-sm text-gray-400 mt-6">
-              Du kannst diese Einstellungen jederzeit in den Einstellungen ändern.
-            </p>
+            <GlassCard className="p-5 max-w-sm mx-auto text-left">
+              <h3 className="text-sm font-semibold text-white/60 mb-4">Your Configuration</h3>
+              <div className="space-y-2.5">
+                {[
+                  { label: 'Strategy', value: strategy, capitalize: true },
+                  { label: 'Timeframe', value: timeframe },
+                  { label: 'Max Position', value: `${maxPositionSize}%` },
+                  { label: 'Max Daily Loss', value: `${maxDailyLoss}%` },
+                  { label: 'Min Confidence', value: `${minConfidence}%` },
+                  { label: 'Testnet', value: useTestnet ? 'Yes' : 'No' },
+                ].map((row) => (
+                  <div key={row.label} className="flex justify-between text-sm">
+                    <span className="text-white/30">{row.label}</span>
+                    <span className={`text-white font-medium ${row.capitalize ? 'capitalize' : ''}`}>{row.value}</span>
+                  </div>
+                ))}
+              </div>
+            </GlassCard>
+
+            <p className="text-xs text-white/20 mt-6">You can change these settings anytime in Settings.</p>
           </div>
         );
 
@@ -448,78 +276,92 @@ export const Onboarding: React.FC = () => {
     }
   };
 
+  const progress = ((currentStep + 1) / steps.length) * 100;
+
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-      <div className="max-w-3xl w-full">
-        {/* Progress Bar */}
-        <div className="mb-8">
+    <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4">
+      {/* Subtle dot grid background */}
+      <div className="fixed inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+
+      <div className="relative z-10 max-w-2xl w-full">
+        {/* Progress */}
+        <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-gray-400">
-              Schritt {currentStep + 1} von {steps.length}
-            </span>
-            <span className="text-sm font-medium text-gray-400">
-              {Math.round(((currentStep + 1) / steps.length) * 100)}%
-            </span>
+            <span className="text-xs font-medium text-white/30">Step {currentStep + 1} of {steps.length}</span>
+            <span className="text-xs font-medium text-white/30">{Math.round(progress)}%</span>
           </div>
-          <div className="w-full bg-slate-700 rounded-full h-2">
-            <div
-              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+          <div className="w-full bg-white/[0.06] rounded-full h-1">
+            <motion.div
+              className="bg-white/30 h-1 rounded-full"
+              initial={false}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
             />
           </div>
         </div>
 
         {/* Content Card */}
-        <div className="bg-slate-800 rounded-lg shadow-xl p-8">
+        <GlassCard className="p-8">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-white mb-2">
-              {steps[currentStep].title}
-            </h1>
-            <p className="text-gray-400">{steps[currentStep].description}</p>
+            <h1 className="text-xl font-bold text-white mb-1">{steps[currentStep].title}</h1>
+            <p className="text-sm text-white/30">{steps[currentStep].description}</p>
           </div>
 
-          {renderStepContent()}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentStep}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.25 }}
+            >
+              {renderStepContent()}
+            </motion.div>
+          </AnimatePresence>
 
           {/* Navigation */}
-          <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-700">
+          <div className="flex items-center justify-between mt-8 pt-5 border-t border-white/[0.06]">
             <button
               onClick={handleSkip}
-              className="px-6 py-2 text-gray-400 hover:text-white transition"
+              className="text-sm text-white/25 hover:text-white/40 transition-colors"
             >
-              {currentStep === steps.length - 1 ? 'Abbrechen' : 'Überspringen'}
+              {currentStep === steps.length - 1 ? 'Cancel' : 'Skip'}
             </button>
 
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center gap-2">
               {currentStep > 0 && (
-                <button
+                <Button
+                  variant="ghost"
                   onClick={() => setCurrentStep(currentStep - 1)}
-                  className="px-6 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition"
+                  className="bg-white/[0.04] hover:bg-white/[0.06] text-white/50 border border-white/[0.06] rounded-xl px-4 py-2.5 h-auto text-sm gap-1.5"
                 >
-                  Zurück
-                </button>
+                  <ChevronLeft className="w-4 h-4" /> Back
+                </Button>
               )}
-              <button
+              <Button
+                variant="ghost"
                 onClick={handleNext}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+                className="bg-white/[0.08] hover:bg-white/[0.12] text-white border border-white/[0.1] rounded-xl px-5 py-2.5 h-auto text-sm font-medium gap-1.5"
               >
-                {currentStep === steps.length - 1 ? 'Zum Dashboard' : 'Weiter'}
-              </button>
+                {currentStep === steps.length - 1 ? (
+                  <>Go to Dashboard <ArrowRight className="w-4 h-4" /></>
+                ) : (
+                  <>Next <ChevronRight className="w-4 h-4" /></>
+                )}
+              </Button>
             </div>
           </div>
-        </div>
+        </GlassCard>
 
         {/* Step Indicators */}
-        <div className="flex justify-center mt-6 space-x-2">
+        <div className="flex justify-center mt-5 gap-1.5">
           {steps.map((_, index) => (
-            <div
+            <motion.div
               key={index}
-              className={`w-2 h-2 rounded-full transition-all ${
-                index === currentStep
-                  ? 'bg-blue-600 w-8'
-                  : index < currentStep
-                  ? 'bg-blue-400'
-                  : 'bg-slate-600'
+              className={`h-1.5 rounded-full transition-colors duration-300 ${
+                index === currentStep ? 'bg-white/40 w-6' : index < currentStep ? 'bg-white/20 w-1.5' : 'bg-white/[0.08] w-1.5'
               }`}
+              layout
             />
           ))}
         </div>

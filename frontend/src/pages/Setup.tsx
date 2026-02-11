@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useStore';
+import { BackgroundPaths } from '@/components/ui/background-paths';
+import { GlassCard } from '@/components/ui/shared';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { motion } from 'framer-motion';
+import { Bot, AlertTriangle, Info, Loader2 } from 'lucide-react';
 
 export const Setup: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -13,47 +19,37 @@ export const Setup: React.FC = () => {
   const setupAdmin = useAuthStore(state => state.setupAdmin);
   const navigate = useNavigate();
 
-  // Check if system is already initialized
   useEffect(() => {
     const checkSystemStatus = async () => {
       try {
-        // Check if system is initialized (users exist)
         const statusResponse = await fetch('/api/system/status');
-        
         if (!statusResponse.ok) {
           setDbStatus('error');
           setError('Cannot connect to backend. Make sure the server is running.');
           return;
         }
-
         const data = await statusResponse.json();
-        
         if (data.initialized) {
-          // System already has users, redirect to login
           navigate('/login');
         } else {
           setDbStatus('ready');
         }
-      } catch (err) {
+      } catch {
         setDbStatus('error');
         setError('Cannot connect to backend. Make sure the server is running.');
       }
     };
-
     checkSystemStatus();
   }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
     if (password !== passwordConfirm) {
       setError('Passwords do not match');
       return;
     }
-
     setLoading(true);
-
     try {
       await setupAdmin(username, password, passwordConfirm);
       navigate('/login');
@@ -64,138 +60,151 @@ export const Setup: React.FC = () => {
     }
   };
 
-  // Show loading state while checking system status
+  // Loading state
   if (dbStatus === 'checking') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900">
-        <div className="bg-slate-800 p-8 rounded-lg shadow-xl w-full max-w-md text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold text-white mb-2">Initializing System...</h2>
-          <p className="text-gray-400">Checking database and running migrations</p>
+      <div className="min-h-screen bg-neutral-950 relative overflow-hidden">
+        <BackgroundPaths />
+        <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
+          <GlassCard className="p-8 w-full max-w-md text-center">
+            <Loader2 className="w-10 h-10 text-white/40 animate-spin mx-auto mb-4" />
+            <h2 className="text-lg font-semibold text-white mb-1">Initializing System</h2>
+            <p className="text-sm text-white/30">Checking database and running migrations</p>
+          </GlassCard>
         </div>
       </div>
     );
   }
 
-  // Show error state if DB is not ready
+  // Error state
   if (dbStatus === 'error') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900">
-        <div className="bg-slate-800 p-8 rounded-lg shadow-xl w-full max-w-md">
-          <div className="text-center mb-6">
-            <div className="text-red-500 text-6xl mb-4">⚠️</div>
-            <h2 className="text-2xl font-bold text-white mb-2">System Not Ready</h2>
-            <p className="text-gray-400">{error}</p>
-          </div>
-          
-          <div className="bg-slate-700 p-4 rounded-lg mb-6">
-            <h3 className="text-white font-semibold mb-2">Quick Start Guide:</h3>
-            <ol className="text-sm text-gray-300 space-y-2 list-decimal list-inside">
-              <li>Make sure Docker is running</li>
-              <li>Start the database: <code className="bg-slate-600 px-2 py-1 rounded">docker-compose up -d postgres</code></li>
-              <li>Start the backend: <code className="bg-slate-600 px-2 py-1 rounded">docker-compose up -d backend</code></li>
-              <li>Refresh this page</li>
-            </ol>
-          </div>
+      <div className="min-h-screen bg-neutral-950 relative overflow-hidden">
+        <BackgroundPaths />
+        <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
+          <GlassCard className="p-8 w-full max-w-md">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 rounded-2xl bg-red-500/[0.08] border border-red-500/15 mx-auto flex items-center justify-center mb-4">
+                <AlertTriangle className="w-8 h-8 text-red-400" />
+              </div>
+              <h2 className="text-xl font-bold text-white mb-2">System Not Ready</h2>
+              <p className="text-sm text-white/40">{error}</p>
+            </div>
 
-          <button
-            onClick={() => window.location.reload()}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition"
-          >
-            Retry Connection
-          </button>
+            <div className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-4 mb-6">
+              <h3 className="text-sm font-semibold text-white/60 mb-3">Quick Start Guide</h3>
+              <ol className="text-xs text-white/40 space-y-2 list-decimal list-inside">
+                <li>Make sure Docker is running</li>
+                <li>Start the database: <code className="bg-white/[0.06] px-1.5 py-0.5 rounded text-white/50">docker-compose up -d postgres</code></li>
+                <li>Start the backend: <code className="bg-white/[0.06] px-1.5 py-0.5 rounded text-white/50">docker-compose up -d backend</code></li>
+                <li>Refresh this page</li>
+              </ol>
+            </div>
+
+            <Button
+              variant="ghost"
+              onClick={() => window.location.reload()}
+              className="w-full bg-white/[0.08] hover:bg-white/[0.12] text-white border border-white/[0.1] rounded-xl py-3 h-auto text-sm font-medium"
+            >
+              Retry Connection
+            </Button>
+          </GlassCard>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-900">
-      <div className="bg-slate-800 p-8 rounded-lg shadow-xl w-full max-w-md">
-        <div className="text-center mb-6">
-          <div className="text-5xl mb-4">🤖</div>
-          <h1 className="text-3xl font-bold text-white mb-2">
-            Welcome to Allie Agent
-          </h1>
-          <p className="text-gray-400">
-            Create your admin account to get started
-          </p>
-        </div>
+    <div className="min-h-screen bg-neutral-950 relative overflow-hidden">
+      <BackgroundPaths />
 
-        <div className="bg-blue-900/30 border border-blue-500/50 rounded-lg p-4 mb-6">
-          <div className="flex items-start">
-            <svg className="w-5 h-5 text-blue-400 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-            </svg>
-            <div className="text-sm text-blue-200">
-              <p className="font-medium mb-1">No CLI Required!</p>
-              <p>All setup is done through this web interface. Database migrations run automatically.</p>
+      <div className="relative z-10 flex items-center justify-center min-h-screen p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="w-full max-w-md"
+        >
+          <GlassCard className="p-8">
+            {/* Header */}
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 rounded-2xl bg-white/[0.06] border border-white/[0.08] mx-auto flex items-center justify-center mb-4">
+                <Bot className="w-8 h-8 text-white/70" />
+              </div>
+              <h1 className="text-2xl font-bold text-white mb-1">Welcome to Allie Agent</h1>
+              <p className="text-sm text-white/30">Create your admin account to get started</p>
             </div>
-          </div>
-        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Username
-            </label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              minLength={3}
-              required
-            />
-            <p className="text-xs text-gray-400 mt-1">
-              Min. 3 characters, alphanumeric + underscore
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              minLength={12}
-              required
-            />
-            <p className="text-xs text-gray-400 mt-1">
-              Min. 12 characters, must contain: uppercase, lowercase, number, special char
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Confirm Password
-            </label>
-            <input
-              type="password"
-              value={passwordConfirm}
-              onChange={(e) => setPasswordConfirm(e.target.value)}
-              className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-              required
-            />
-          </div>
-
-          {error && (
-            <div className="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded">
-              {error}
+            {/* Info Banner */}
+            <div className="bg-blue-500/[0.06] border border-blue-500/10 rounded-xl p-4 mb-6 flex items-start gap-3">
+              <Info className="w-4 h-4 text-blue-400/70 mt-0.5 flex-shrink-0" />
+              <div className="text-xs text-blue-200/60">
+                <p className="font-medium text-blue-200/80">No CLI Required</p>
+                <p className="mt-0.5">All setup is done through this web interface. Database migrations run automatically.</p>
+              </div>
             </div>
-          )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-semibold py-3 rounded-lg transition duration-200"
-          >
-            {loading ? 'Creating Account...' : 'Create Admin Account'}
-          </button>
-        </form>
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="text-xs font-medium text-white/40 uppercase tracking-wider mb-1.5 block">Username</label>
+                <Input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Choose a username"
+                  minLength={3}
+                  required
+                />
+                <p className="text-[10px] text-white/20 mt-1">Min. 3 characters, alphanumeric + underscore</p>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-white/40 uppercase tracking-wider mb-1.5 block">Password</label>
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Create a strong password"
+                  minLength={12}
+                  required
+                />
+                <p className="text-[10px] text-white/20 mt-1">Min. 12 chars: uppercase, lowercase, number, special char</p>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-white/40 uppercase tracking-wider mb-1.5 block">Confirm Password</label>
+                <Input
+                  type="password"
+                  value={passwordConfirm}
+                  onChange={(e) => setPasswordConfirm(e.target.value)}
+                  placeholder="Confirm your password"
+                  required
+                />
+              </div>
+
+              {error && (
+                <div className="bg-red-500/[0.06] border border-red-500/10 rounded-xl p-3 flex items-center gap-2 text-sm text-red-400">
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                  {error}
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                disabled={loading}
+                variant="ghost"
+                className="w-full bg-white/[0.08] hover:bg-white/[0.12] text-white border border-white/[0.1] rounded-xl py-3 h-auto text-sm font-medium mt-2 disabled:opacity-40"
+              >
+                {loading ? (
+                  <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Creating Account...</>
+                ) : (
+                  'Create Admin Account'
+                )}
+              </Button>
+            </form>
+          </GlassCard>
+        </motion.div>
       </div>
     </div>
   );
