@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
-import { config, validateConfig } from './config/environment';
+import { config, validateConfig, loadSettingsIntoConfig } from './config/environment';
 import { testDatabaseConnection } from './config/database';
 import authRoutes from './routes/auth.routes';
 import dashboardRoutes from './routes/dashboard.routes';
@@ -110,6 +110,11 @@ async function startServer() {
     logger.info('Running database migrations...');
     await runMigrations();
     logger.info('Database migrations completed');
+
+    // Load API keys + settings from DB into runtime config
+    logger.info('Loading user settings from database...');
+    await loadSettingsIntoConfig();
+    logger.info('User settings loaded into runtime config');
 
     // Start session cleanup cron job (every hour)
     setInterval(() => {

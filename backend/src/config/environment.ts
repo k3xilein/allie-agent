@@ -49,6 +49,83 @@ export const config = {
   },
 };
 
+/**
+ * Load API keys from the database (user_settings) into the runtime config.
+ * Called once on startup and again whenever settings are saved.
+ * DB keys take priority over env vars — if a user enters keys in the UI, those win.
+ */
+export async function loadSettingsIntoConfig(): Promise<void> {
+  try {
+    // Dynamic import to avoid circular dependency (pool → config → pool)
+    const { pool } = await import('./database');
+
+    // Find the first user that has settings (single-user system)
+    const result = await pool.query(
+      'SELECT api_keys_encrypted, api_keys_iv, api_keys_tag, risk_management, strategy FROM user_settings ORDER BY id LIMIT 1'
+    );
+
+    if (result.rows.length === 0) {
+      console.log('ℹ No user settings found in DB — using environment variables');
+      return;
+    }
+
+    const row = result.rows[0];
+
+    // Decrypt API keys if present
+    if (row.api_keys_encrypted && row.api_keys_iv && row.api_keys_tag) {
+      const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || require('crypto').randomBytes(32).toString('hex');
+      
+      try {
+        const decipher = crypto.createDecipheriv(
+          'aes-256-gcm',
+          Buffer.from(ENCRYPTION_KEY.slice(0, 64), 'hex'),
+          Buffer.from(row.api_keys_iv, 'hex')
+        );
+        decipher.setAuthTag(Buffer.from(row.api_keys_tag, 'hex'));
+        let decrypted = decipher.update(row.api_keys_encrypted, 'hex', 'utf8');
+        decrypted += decipher.final('utf8');
+
+        const apiKeys = JSON.parse(decrypted);
+
+        // Override config with DB values (only if non-empty)
+        if (apiKeys.hyperliquid?.apiKey) {
+          config.hyperliquid.apiKey = apiKeys.hyperliquid.apiKey;
+        }
+        if (apiKeys.hyperliquid?.privateKey) {
+          config.hyperliquid.privateKey = apiKeys.hyperliquid.privateKey;
+        }
+        if (typeof apiKeys.hyperliquid?.testnet === 'boolean') {
+          config.hyperliquid.testnet = apiKeys.hyperliquid.testnet;
+        }
+        if (apiKeys.openrouter?.apiKey) {
+          config.ai.apiKey = apiKeys.openrouter.apiKey;
+        }
+
+        console.log('✅ Loaded API keys from database settings into runtime config');
+      } catch (decryptErr) {
+        console.error('⚠ Failed to decrypt API keys from DB — using env vars:', decryptErr);
+      }
+    }
+
+    // Load risk management settings if present
+    const risk = row.risk_management;
+    if (risk && typeof risk === 'object') {
+      if (risk.maxPositionSize) config.trading.maxPositionSizePercent = risk.maxPositionSize;
+      if (risk.maxDailyLoss) config.trading.maxDailyLossPercent = risk.maxDailyLoss;
+      if (risk.stopLossPercent) config.trading.stopLossPercent = risk.stopLossPercent;
+      if (risk.takeProfitPercent) config.trading.takeProfitPercent = risk.takeProfitPercent;
+    }
+
+    // Load strategy settings if present
+    const strat = row.strategy;
+    if (strat && typeof strat === 'object') {
+      if (strat.minConfidence) config.trading.minConfidence = strat.minConfidence;
+    }
+  } catch (error) {
+    console.error('⚠ Could not load settings from DB — using environment variables:', error);
+  }
+}
+
 // Validate required env vars
 export function validateConfig() {
   const required = [

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { SettingsService } from '../services/SettingsService';
 import { requireAuth, AuthRequest } from '../middleware/auth';
+import { loadSettingsIntoConfig } from '../config/environment';
 
 const router = Router();
 
@@ -25,6 +26,9 @@ router.put('/', requireAuth, async (req: AuthRequest, res: Response) => {
     
     const updated = await SettingsService.updateSettings(userId, settingsData);
     
+    // Reload API keys + settings into runtime config so services use updated values
+    await loadSettingsIntoConfig();
+    
     res.json(updated);
   } catch (error) {
     console.error('Error updating settings:', error);
@@ -45,6 +49,9 @@ router.post('/onboarding', requireAuth, async (req: AuthRequest, res: Response) 
     };
     
     const saved = await SettingsService.saveOnboarding(userId, settings);
+    
+    // Reload API keys + settings into runtime config
+    await loadSettingsIntoConfig();
     
     res.json(saved);
   } catch (error) {
