@@ -10,6 +10,7 @@ import dashboardRoutes from './routes/dashboard.routes';
 import agentRoutes from './routes/agent.routes';
 import settingsRoutes from './routes/settings.routes';
 import systemRoutes from './routes/system.routes';
+import healthRoutes from './routes/health.routes';
 import { errorHandler } from './middleware/errorHandler';
 import { suspiciousActivityDetector, preventHPP, apiSecurityHeaders, sanitizeInput } from './middleware/security';
 import { logger } from './utils/logger';
@@ -80,6 +81,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/agent', agentRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/system', systemRoutes);
+app.use('/api/health', healthRoutes);
 app.use('/api/positions', dashboardRoutes); // Shares routes
 app.use('/api/trades', dashboardRoutes); // Shares routes
 

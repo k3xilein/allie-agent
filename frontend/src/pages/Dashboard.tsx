@@ -4,6 +4,7 @@ import { useAuthStore, useDashboardStore } from '../store/useStore';
 import { agentAPI } from '../api/client';
 import { AppShell } from '@/components/layout/AppShell';
 import { GlassCard, Metric, SectionHeader, StatusDot } from '@/components/ui/shared';
+import { SystemHealth } from '@/components/SystemHealth';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Play,
@@ -210,6 +211,9 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
       </GlassCard>
+
+      {/* System Health */}
+      <SystemHealth />
 
       {/* Positions */}
       <GlassCard className="p-6">

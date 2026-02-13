@@ -57,4 +57,13 @@ export const agentAPI = {
     api.get('/agent/status'),
 };
 
+// Health Check
+export const healthAPI = {
+  runCheck: (testTrade: boolean = false) =>
+    api.get(`/health/check?testTrade=${testTrade}`),
+
+  getStatus: () =>
+    api.get('/health/status'),
+};
+
 export default api;

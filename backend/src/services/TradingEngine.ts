@@ -10,6 +10,7 @@ import { aiService } from './AIService';
 import { riskManagementEngine } from './RiskManagementEngine';
 import { agentStateService } from './AgentStateService';
 import { loggingService } from './LoggingService';
+import { healthCheckService } from './HealthCheckService';
 import { TradeDecision, Position, AccountBalance } from '../models/types';
 
 export class TradingEngine {
@@ -33,6 +34,16 @@ export class TradingEngine {
     }
 
     logger.info('🚀 Starting Trading Engine', { symbol: this.symbol });
+
+    // Run pre-start health check
+    logger.info('🩺 Running pre-start diagnostics...');
+    const healthResult = await healthCheckService.preStartCheck();
+    if (!healthResult.ok) {
+      const failMsg = healthResult.failures.join('; ');
+      logger.error(`❌ Pre-start check failed: ${failMsg}`);
+      throw new Error(`Pre-start check failed: ${failMsg}`);
+    }
+    logger.info('✅ Pre-start diagnostics passed');
 
     // Validate Hyperliquid connection
     const connected = await hyperliquidClient.validateConnection();

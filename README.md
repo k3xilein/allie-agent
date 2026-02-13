@@ -224,7 +224,8 @@ FRONTEND_URL=http://localhost:5173
 ## 📖 Dokumentation
 
 ### Quick Guides
-- 🚀 [**NO-CLI-SETUP.md**](./NO-CLI-SETUP.md) - Kompletter Setup ohne Terminal
+- � [**SETUP-GUIDE.md**](./SETUP-GUIDE.md) - **Vollständige Einrichtungsanleitung mit API-Keys**
+- �🚀 [**NO-CLI-SETUP.md**](./NO-CLI-SETUP.md) - Kompletter Setup ohne Terminal
 - 🔐 [**SECURITY-AUDIT.md**](./SECURITY-AUDIT.md) - Security Best Practices
 - 🚢 [**DEPLOYMENT-GUIDE.md**](./DEPLOYMENT-GUIDE.md) - Production Deployment
 - ⚙️ [**ONBOARDING-SETTINGS.md**](./ONBOARDING-SETTINGS.md) - Onboarding & Settings Features
