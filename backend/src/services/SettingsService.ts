@@ -1,8 +1,5 @@
 import { pool } from '../config/database';
-import crypto from 'crypto';
-
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || crypto.randomBytes(32).toString('hex');
-const ALGORITHM = 'aes-256-gcm';
+import { encrypt, decrypt } from '../utils/encryption';
 
 interface SettingsData {
   apiKeys?: {
@@ -35,38 +32,6 @@ interface SettingsData {
 }
 
 export class SettingsService {
-  // Encrypt sensitive data
-  private static encrypt(text: string): { encrypted: string; iv: string; tag: string } {
-    const iv = crypto.randomBytes(16);
-    const cipher = crypto.createCipheriv(ALGORITHM, Buffer.from(ENCRYPTION_KEY.slice(0, 64), 'hex'), iv);
-    
-    let encrypted = cipher.update(text, 'utf8', 'hex');
-    encrypted += cipher.final('hex');
-    
-    const tag = cipher.getAuthTag();
-    
-    return {
-      encrypted,
-      iv: iv.toString('hex'),
-      tag: tag.toString('hex'),
-    };
-  }
-
-  // Decrypt sensitive data
-  private static decrypt(encrypted: string, iv: string, tag: string): string {
-    const decipher = crypto.createDecipheriv(
-      ALGORITHM,
-      Buffer.from(ENCRYPTION_KEY.slice(0, 64), 'hex'),
-      Buffer.from(iv, 'hex')
-    );
-    
-    decipher.setAuthTag(Buffer.from(tag, 'hex'));
-    
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    
-    return decrypted;
-  }
 
   // Get user settings
   static async getSettings(userId: number): Promise<SettingsData> {
@@ -114,7 +79,7 @@ export class SettingsService {
     let apiKeys = settings.api_keys;
     if (settings.api_keys_encrypted && settings.api_keys_iv && settings.api_keys_tag) {
       try {
-        const decrypted = this.decrypt(
+        const decrypted = decrypt(
           settings.api_keys_encrypted,
           settings.api_keys_iv,
           settings.api_keys_tag
@@ -145,7 +110,7 @@ export class SettingsService {
     let apiKeysTag = null;
 
     if (settingsData.apiKeys) {
-      const { encrypted, iv, tag } = this.encrypt(JSON.stringify(settingsData.apiKeys));
+      const { encrypted, iv, tag } = encrypt(JSON.stringify(settingsData.apiKeys));
       apiKeysEncrypted = encrypted;
       apiKeysIv = iv;
       apiKeysTag = tag;

@@ -58,6 +58,7 @@ export async function loadSettingsIntoConfig(): Promise<void> {
   try {
     // Dynamic import to avoid circular dependency (pool → config → pool)
     const { pool } = await import('./database');
+    const { decrypt } = await import('../utils/encryption');
 
     // Find the first user that has settings (single-user system)
     const result = await pool.query(
@@ -73,18 +74,8 @@ export async function loadSettingsIntoConfig(): Promise<void> {
 
     // Decrypt API keys if present
     if (row.api_keys_encrypted && row.api_keys_iv && row.api_keys_tag) {
-      const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || require('crypto').randomBytes(32).toString('hex');
-      
       try {
-        const decipher = crypto.createDecipheriv(
-          'aes-256-gcm',
-          Buffer.from(ENCRYPTION_KEY.slice(0, 64), 'hex'),
-          Buffer.from(row.api_keys_iv, 'hex')
-        );
-        decipher.setAuthTag(Buffer.from(row.api_keys_tag, 'hex'));
-        let decrypted = decipher.update(row.api_keys_encrypted, 'hex', 'utf8');
-        decrypted += decipher.final('utf8');
-
+        const decrypted = decrypt(row.api_keys_encrypted, row.api_keys_iv, row.api_keys_tag);
         const apiKeys = JSON.parse(decrypted);
 
         // Override config with DB values (only if non-empty)
