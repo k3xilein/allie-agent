@@ -1,5 +1,6 @@
 import { pool } from '../config/database';
 import { encrypt, decrypt } from '../utils/encryption';
+import { logger } from '../utils/logger';
 
 interface SettingsData {
   apiKeys?: {
@@ -82,16 +83,22 @@ export class SettingsService {
     };
     if (settings.api_keys_encrypted && settings.api_keys_iv && settings.api_keys_tag) {
       try {
+        logger.info('[Settings] Attempting to decrypt API keys...');
         const decrypted = decrypt(
           settings.api_keys_encrypted,
           settings.api_keys_iv,
           settings.api_keys_tag
         );
         apiKeys = JSON.parse(decrypted);
-      } catch (error) {
-        console.error('Failed to decrypt API keys (will return empty — user must re-save):', error);
+        const hasHL = !!(apiKeys?.hyperliquid?.apiKey || apiKeys?.hyperliquid?.privateKey);
+        const hasOR = !!apiKeys?.openrouter?.apiKey;
+        logger.info(`[Settings] Decrypt OK — Hyperliquid keys: ${hasHL}, OpenRouter key: ${hasOR}`);
+      } catch (error: any) {
+        logger.error(`[Settings] Decrypt FAILED: ${error.message}`);
         // Keep the default empty keys so the UI doesn't break
       }
+    } else {
+      logger.info('[Settings] No encrypted API keys found in DB row');
     }
 
     return {
@@ -131,14 +138,17 @@ export class SettingsService {
       settingsData.apiKeys?.openrouter?.apiKey;
 
     if (settingsData.apiKeys && hasAnyKey) {
+      logger.info(`[Settings] Encrypting new API keys (hasHL: ${!!(settingsData.apiKeys.hyperliquid?.apiKey || settingsData.apiKeys.hyperliquid?.privateKey)}, hasOR: ${!!settingsData.apiKeys.openrouter?.apiKey})`);
       const { encrypted, iv, tag } = encrypt(JSON.stringify(settingsData.apiKeys));
       apiKeysEncrypted = encrypted;
       apiKeysIv = iv;
       apiKeysTag = tag;
+      logger.info('[Settings] Encryption successful');
     }
 
     // If no new keys provided, preserve existing encrypted keys in DB
     if (!hasAnyKey) {
+      logger.info('[Settings] No API keys in request — preserving existing DB keys');
       const existing = await pool.query(
         'SELECT api_keys_encrypted, api_keys_iv, api_keys_tag FROM user_settings WHERE user_id = $1',
         [userId]

@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { SettingsService } from '../services/SettingsService';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { loadSettingsIntoConfig } from '../config/environment';
+import { logger } from '../utils/logger';
 
 const router = Router();
 
@@ -30,9 +31,9 @@ router.put('/', requireAuth, async (req: AuthRequest, res: Response) => {
     await loadSettingsIntoConfig();
     
     res.json(updated);
-  } catch (error) {
-    console.error('Error updating settings:', error);
-    res.status(500).json({ error: 'Failed to update settings' });
+  } catch (error: any) {
+    logger.error('Error updating settings:', error);
+    res.status(500).json({ error: 'Failed to update settings', details: error.message });
   }
 });
 

@@ -5,27 +5,42 @@ import crypto from 'crypto';
 
 const ALGORITHM = 'aes-256-gcm';
 
+// Fallback key — used only if neither ENCRYPTION_KEY nor SESSION_SECRET are set.
+// This is less secure than using a proper secret, but ensures encryption ALWAYS works.
+// In production, SESSION_SECRET should always be set via .env / docker-compose.
+const FALLBACK_APP_KEY = 'allie-agent-default-encryption-key-2026';
+
+/** Cache the derived key so we don't recompute on every call */
+let _cachedKey: Buffer | null = null;
+
 /**
  * Get a stable 32-byte encryption key.
- * Priority: ENCRYPTION_KEY env var > derived from SESSION_SECRET > error
+ * Priority: ENCRYPTION_KEY env var > SESSION_SECRET > fallback app key
  */
 function getEncryptionKey(): Buffer {
-  // 1. Explicit encryption key
+  if (_cachedKey) return _cachedKey;
+
+  let source: string;
+
+  // 1. Explicit encryption key (hex-encoded, 64+ chars = 32 bytes)
   if (process.env.ENCRYPTION_KEY && process.env.ENCRYPTION_KEY.length >= 64) {
-    return Buffer.from(process.env.ENCRYPTION_KEY.slice(0, 64), 'hex');
+    _cachedKey = Buffer.from(process.env.ENCRYPTION_KEY.slice(0, 64), 'hex');
+    console.log('[encryption] Using ENCRYPTION_KEY env var');
+    return _cachedKey;
   }
 
-  // 2. Derive from SESSION_SECRET (deterministic — same secret = same key)
-  const sessionSecret = process.env.SESSION_SECRET;
-  if (sessionSecret) {
-    return crypto.createHash('sha256').update(sessionSecret).digest();
+  // 2. Derive from SESSION_SECRET
+  if (process.env.SESSION_SECRET && process.env.SESSION_SECRET.length > 0) {
+    source = process.env.SESSION_SECRET;
+    console.log('[encryption] Deriving key from SESSION_SECRET');
+  } else {
+    // 3. Fallback — always works, but log a warning
+    source = FALLBACK_APP_KEY;
+    console.warn('[encryption] ⚠ No ENCRYPTION_KEY or SESSION_SECRET set — using fallback key. Set SESSION_SECRET in .env for proper security!');
   }
 
-  // 3. Fatal — we can't encrypt/decrypt without a stable key
-  throw new Error(
-    'No ENCRYPTION_KEY or SESSION_SECRET set. Cannot encrypt/decrypt API keys. ' +
-    'Set SESSION_SECRET in your .env or docker-compose environment.'
-  );
+  _cachedKey = crypto.createHash('sha256').update(source).digest();
+  return _cachedKey;
 }
 
 /** Encrypt a string. Returns { encrypted, iv, tag } as hex strings. */

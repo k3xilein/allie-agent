@@ -50,6 +50,7 @@ export const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState('api');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
 
   const [settings, setSettings] = useState<SettingsData>({
     apiKeys: {
@@ -106,6 +107,7 @@ export const Settings: React.FC = () => {
   const handleSave = async () => {
     setLoading(true);
     setSuccess(false);
+    setError('');
     try {
       const response = await fetch('/api/settings', {
         method: 'PUT',
@@ -115,12 +117,44 @@ export const Settings: React.FC = () => {
       });
       if (response.ok) {
         const saved = await response.json();
-        setSettings(saved);
+        // Deep merge response to ensure we don't lose structure
+        setSettings({
+          apiKeys: {
+            hyperliquid: {
+              apiKey: saved.apiKeys?.hyperliquid?.apiKey || '',
+              privateKey: saved.apiKeys?.hyperliquid?.privateKey || '',
+              testnet: saved.apiKeys?.hyperliquid?.testnet ?? true,
+            },
+            openrouter: {
+              apiKey: saved.apiKeys?.openrouter?.apiKey || '',
+            },
+          },
+          riskManagement: {
+            maxPositionSize: saved.riskManagement?.maxPositionSize ?? 10,
+            maxDailyLoss: saved.riskManagement?.maxDailyLoss ?? 5,
+            stopLossPercent: saved.riskManagement?.stopLossPercent ?? 2,
+            takeProfitPercent: saved.riskManagement?.takeProfitPercent ?? 5,
+          },
+          strategy: {
+            type: saved.strategy?.type || 'balanced',
+            timeframe: saved.strategy?.timeframe || '15m',
+            minConfidence: saved.strategy?.minConfidence ?? 70,
+          },
+          notifications: {
+            email: saved.notifications?.email ?? false,
+            tradeAlerts: saved.notifications?.tradeAlerts ?? true,
+            dailyReport: saved.notifications?.dailyReport ?? false,
+          },
+        });
         setSuccess(true);
         setTimeout(() => setSuccess(false), 3000);
+      } else {
+        const errData = await response.json().catch(() => ({}));
+        setError(errData.details || errData.error || `Save failed (${response.status})`);
       }
-    } catch (error) {
-      console.error('Failed to save settings:', error);
+    } catch (err: any) {
+      setError(err.message || 'Network error');
+      console.error('Failed to save settings:', err);
     } finally {
       setLoading(false);
     }
@@ -404,8 +438,19 @@ export const Settings: React.FC = () => {
                     Saved successfully
                   </motion.div>
                 )}
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="flex items-center gap-2 text-red-400 text-sm"
+                  >
+                    <AlertTriangle className="w-4 h-4" />
+                    {error}
+                  </motion.div>
+                )}
               </AnimatePresence>
-              {!success && <div />}
+              {!success && !error && <div />}
               <Button
                 onClick={handleSave}
                 disabled={loading}
