@@ -1,7 +1,7 @@
 -- Migration: Create trades table
 -- Created: 2026-02-10
 
-CREATE TABLE trades (
+CREATE TABLE IF NOT EXISTS trades (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   symbol VARCHAR(20) NOT NULL,
   side VARCHAR(5) NOT NULL CHECK (side IN ('long', 'short')),
@@ -18,7 +18,7 @@ CREATE TABLE trades (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_trades_entry_ts ON trades(entry_timestamp DESC);
-CREATE INDEX idx_trades_symbol ON trades(symbol);
-CREATE INDEX idx_trades_evaluation ON trades(evaluation);
-CREATE INDEX idx_trades_exit_ts ON trades(exit_timestamp DESC) WHERE exit_timestamp IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_trades_entry_ts ON trades(entry_timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_trades_symbol ON trades(symbol);
+CREATE INDEX IF NOT EXISTS idx_trades_evaluation ON trades(evaluation);
+CREATE INDEX IF NOT EXISTS idx_trades_exit_ts ON trades(exit_timestamp DESC) WHERE exit_timestamp IS NOT NULL;

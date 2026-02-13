@@ -1,7 +1,7 @@
 -- Migration: Create ai_analyses table
 -- Created: 2026-02-10
 
-CREATE TABLE ai_analyses (
+CREATE TABLE IF NOT EXISTS ai_analyses (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   timestamp TIMESTAMP NOT NULL,
   symbol VARCHAR(20) NOT NULL,
@@ -15,6 +15,6 @@ CREATE TABLE ai_analyses (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_analyses_timestamp ON ai_analyses(timestamp DESC);
-CREATE INDEX idx_analyses_action_taken ON ai_analyses(action_taken);
-CREATE INDEX idx_analyses_decision ON ai_analyses(decision);
+CREATE INDEX IF NOT EXISTS idx_analyses_timestamp ON ai_analyses(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_analyses_action_taken ON ai_analyses(action_taken);
+CREATE INDEX IF NOT EXISTS idx_analyses_decision ON ai_analyses(decision);

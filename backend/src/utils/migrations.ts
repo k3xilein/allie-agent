@@ -16,6 +16,21 @@ export async function runMigrations(): Promise<void> {
       );
     `);
 
+    // Handle renamed migrations: if old name was already executed, register the new name too
+    const renamedMigrations: Record<string, string> = {
+      '005_create_user_settings.sql': '008_create_user_settings.sql',
+    };
+    for (const [oldName, newName] of Object.entries(renamedMigrations)) {
+      const oldExists = await pool.query('SELECT 1 FROM migrations WHERE filename = $1', [oldName]);
+      if (oldExists.rows.length > 0) {
+        const newExists = await pool.query('SELECT 1 FROM migrations WHERE filename = $1', [newName]);
+        if (newExists.rows.length === 0) {
+          await pool.query('INSERT INTO migrations (filename) VALUES ($1)', [newName]);
+          logger.info(`🔄 Mapped renamed migration ${oldName} → ${newName}`);
+        }
+      }
+    }
+
     // Get list of executed migrations
     const executedResult = await pool.query(
       'SELECT filename FROM migrations ORDER BY executed_at'
