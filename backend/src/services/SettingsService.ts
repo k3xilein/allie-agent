@@ -76,7 +76,10 @@ export class SettingsService {
     const settings = result.rows[0];
 
     // Decrypt API keys if they exist
-    let apiKeys = settings.api_keys;
+    let apiKeys: SettingsData['apiKeys'] = {
+      hyperliquid: { apiKey: '', privateKey: '', testnet: true },
+      openrouter: { apiKey: '' },
+    };
     if (settings.api_keys_encrypted && settings.api_keys_iv && settings.api_keys_tag) {
       try {
         const decrypted = decrypt(
@@ -86,34 +89,65 @@ export class SettingsService {
         );
         apiKeys = JSON.parse(decrypted);
       } catch (error) {
-        console.error('Failed to decrypt API keys:', error);
+        console.error('Failed to decrypt API keys (will return empty — user must re-save):', error);
+        // Keep the default empty keys so the UI doesn't break
       }
     }
 
     return {
-      apiKeys: apiKeys || {
-        hyperliquid: { apiKey: '', privateKey: '', testnet: true },
-        openrouter: { apiKey: '' },
+      apiKeys,
+      riskManagement: settings.risk_management || {
+        maxPositionSize: 10,
+        maxDailyLoss: 5,
+        stopLossPercent: 2,
+        takeProfitPercent: 5,
       },
-      riskManagement: settings.risk_management || {},
-      strategy: settings.strategy || {},
-      notifications: settings.notifications || {},
+      strategy: settings.strategy || {
+        type: 'balanced',
+        timeframe: '15m',
+        minConfidence: 70,
+      },
+      notifications: settings.notifications || {
+        email: false,
+        tradeAlerts: true,
+        dailyReport: false,
+      },
       onboardingCompleted: settings.onboarding_completed || false,
     };
   }
 
   // Update settings
   static async updateSettings(userId: number, settingsData: SettingsData): Promise<SettingsData> {
-    // Encrypt API keys
+    // Encrypt API keys — but only if at least one key has a non-empty value.
+    // This prevents overwriting valid encrypted keys when the frontend sends
+    // empty keys (e.g. because a previous decrypt failed on page load).
     let apiKeysEncrypted = null;
     let apiKeysIv = null;
     let apiKeysTag = null;
 
-    if (settingsData.apiKeys) {
+    const hasAnyKey =
+      settingsData.apiKeys?.hyperliquid?.apiKey ||
+      settingsData.apiKeys?.hyperliquid?.privateKey ||
+      settingsData.apiKeys?.openrouter?.apiKey;
+
+    if (settingsData.apiKeys && hasAnyKey) {
       const { encrypted, iv, tag } = encrypt(JSON.stringify(settingsData.apiKeys));
       apiKeysEncrypted = encrypted;
       apiKeysIv = iv;
       apiKeysTag = tag;
+    }
+
+    // If no new keys provided, preserve existing encrypted keys in DB
+    if (!hasAnyKey) {
+      const existing = await pool.query(
+        'SELECT api_keys_encrypted, api_keys_iv, api_keys_tag FROM user_settings WHERE user_id = $1',
+        [userId]
+      );
+      if (existing.rows.length > 0 && existing.rows[0].api_keys_encrypted) {
+        apiKeysEncrypted = existing.rows[0].api_keys_encrypted;
+        apiKeysIv = existing.rows[0].api_keys_iv;
+        apiKeysTag = existing.rows[0].api_keys_tag;
+      }
     }
 
     await pool.query(

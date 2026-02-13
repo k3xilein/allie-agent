@@ -68,7 +68,35 @@ export const Settings: React.FC = () => {
       const response = await fetch('/api/settings', { credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
-        setSettings(data);
+        // Deep merge with defaults to prevent undefined access on nested fields
+        setSettings({
+          apiKeys: {
+            hyperliquid: {
+              apiKey: data.apiKeys?.hyperliquid?.apiKey || '',
+              privateKey: data.apiKeys?.hyperliquid?.privateKey || '',
+              testnet: data.apiKeys?.hyperliquid?.testnet ?? true,
+            },
+            openrouter: {
+              apiKey: data.apiKeys?.openrouter?.apiKey || '',
+            },
+          },
+          riskManagement: {
+            maxPositionSize: data.riskManagement?.maxPositionSize ?? 10,
+            maxDailyLoss: data.riskManagement?.maxDailyLoss ?? 5,
+            stopLossPercent: data.riskManagement?.stopLossPercent ?? 2,
+            takeProfitPercent: data.riskManagement?.takeProfitPercent ?? 5,
+          },
+          strategy: {
+            type: data.strategy?.type || 'balanced',
+            timeframe: data.strategy?.timeframe || '15m',
+            minConfidence: data.strategy?.minConfidence ?? 70,
+          },
+          notifications: {
+            email: data.notifications?.email ?? false,
+            tradeAlerts: data.notifications?.tradeAlerts ?? true,
+            dailyReport: data.notifications?.dailyReport ?? false,
+          },
+        });
       }
     } catch (error) {
       console.error('Failed to load settings:', error);
@@ -86,6 +114,8 @@ export const Settings: React.FC = () => {
         body: JSON.stringify(settings),
       });
       if (response.ok) {
+        const saved = await response.json();
+        setSettings(saved);
         setSuccess(true);
         setTimeout(() => setSuccess(false), 3000);
       }
