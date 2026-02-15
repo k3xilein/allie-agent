@@ -6,8 +6,8 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install --only=production
+# Install dependencies (include devDeps for build tools like vite/tsc)
+RUN npm install
 
 # Copy source
 COPY . .
@@ -31,9 +31,9 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 # Create directory for Let's Encrypt challenges
 RUN mkdir -p /var/www/certbot
 
-# Add non-root user
-RUN addgroup -g 101 -S nginx && \
-    adduser -S -D -H -u 101 -h /var/cache/nginx -s /sbin/nologin -G nginx -g nginx nginx
+# Add non-root user (nginx user may already exist in nginx:alpine)
+RUN (addgroup -g 101 -S nginx 2>/dev/null || true) && \
+    (adduser -S -D -H -u 101 -h /var/cache/nginx -s /sbin/nologin -G nginx -g nginx nginx 2>/dev/null || true)
 
 # Set permissions
 RUN chown -R nginx:nginx /usr/share/nginx/html && \
