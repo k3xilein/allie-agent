@@ -301,7 +301,10 @@ class HealthCheckService {
       // Place a tiny limit order far from market price (won't fill) then cancel it
       // This proves: auth works, order submission works, cancel works
       const testPrice = price * 0.5; // 50% below market — will never fill
-      const minSize = 0.01; // Smallest size for most assets (szDecimals=2)
+      // Hyperliquid requires minimum order value of $10
+      // Calculate minimum size that meets this at the test price
+      const minValueSize = Math.ceil((11 / testPrice) * 100) / 100; // Round up to 2 decimals, $11 to be safe
+      const minSize = Math.max(0.01, minValueSize);
 
       logger.info('🧪 Test trade: placing test limit order...', { symbol, testPrice, size: minSize });
 
