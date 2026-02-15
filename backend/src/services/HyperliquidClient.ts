@@ -6,6 +6,7 @@ import { logger } from '../utils/logger';
 
 export class HyperliquidClient {
   private sdk: Hyperliquid | null = null;
+  private derivedAddress: string = '';
   private connected: boolean = false;
   private lastConnectionAttempt: number = 0;
   private connectionCooldown: number = 30000; // 30s between retries
@@ -37,9 +38,14 @@ export class HyperliquidClient {
         return false;
       }
 
+      const rawWallet = this.walletAddress;
+      // Only pass walletAddress to SDK if it looks like a valid Ethereum address (42 chars)
+      // If it looks like a private key (66 chars), don't pass it — let SDK derive from privateKey
+      const validWallet = rawWallet && /^0x[0-9a-fA-F]{40}$/.test(rawWallet) ? rawWallet : undefined;
+
       logger.info('🔌 Attempting Hyperliquid SDK connection...', {
         testnet: this.testnet,
-        hasWallet: !!this.walletAddress,
+        hasWallet: !!validWallet,
         keyLen: pk.length,
       });
 
@@ -47,7 +53,7 @@ export class HyperliquidClient {
         privateKey: pk,
         testnet: this.testnet,
         enableWs: false, // Use REST for reliability
-        walletAddress: this.walletAddress || undefined,
+        walletAddress: validWallet,
       });
 
       await this.sdk.connect();
@@ -91,7 +97,7 @@ export class HyperliquidClient {
   async getAccountInfo(): Promise<AccountBalance> {
     try {
       const sdk = await this.ensureConnected();
-      const address = this.walletAddress || await this.getWalletAddress();
+      const address = await this.getWalletAddress();
 
       // Fetch perps clearinghouse state
       const state = await sdk.info.perpetuals.getClearinghouseState(address);
@@ -157,7 +163,7 @@ export class HyperliquidClient {
   async getOpenPositions(): Promise<Position[]> {
     try {
       const sdk = await this.ensureConnected();
-      const address = this.walletAddress || await this.getWalletAddress();
+      const address = await this.getWalletAddress();
       const state = await sdk.info.perpetuals.getClearinghouseState(address);
 
       const positions: Position[] = [];
@@ -573,11 +579,40 @@ export class HyperliquidClient {
   }
 
   // ============ UTILITIES ============
+  /**
+   * Returns a valid Ethereum address for Hyperliquid API calls.
+   * If walletAddress is configured and looks like an address (42 chars), use it.
+   * Otherwise, derive the address from the private key using ethers (transitive dep of hyperliquid SDK).
+   */
   private async getWalletAddress(): Promise<string> {
-    // If using a private key directly, the SDK derives the address
-    // For agent wallets, the walletAddress must be provided
-    if (this.walletAddress) return this.walletAddress;
-    throw new Error('Wallet address not configured. Set HYPERLIQUID_WALLET_ADDRESS for agent wallets.');
+    // Return cached derived address
+    if (this.derivedAddress) return this.derivedAddress;
+
+    const wa = this.walletAddress;
+
+    // A valid Ethereum address is 42 chars: 0x + 40 hex digits
+    if (wa && /^0x[0-9a-fA-F]{40}$/.test(wa)) {
+      this.derivedAddress = wa;
+      return wa;
+    }
+
+    // walletAddress is missing or looks like a private key — derive from privateKey
+    const pk = this.privateKey;
+    if (pk) {
+      try {
+        // ethers is a transitive dependency of the hyperliquid SDK
+        // @ts-ignore — ethers has no type declarations installed but is available at runtime
+        const { ethers } = await import('ethers');
+        const wallet = new ethers.Wallet(pk);
+        this.derivedAddress = wallet.address;
+        logger.info('🔑 Derived wallet address from private key', { address: wallet.address });
+        return wallet.address;
+      } catch (err) {
+        logger.error('Failed to derive wallet address from private key', { error: String(err) });
+      }
+    }
+
+    throw new Error('Wallet address not configured and cannot be derived. Set HYPERLIQUID_WALLET_ADDRESS or HYPERLIQUID_PRIVATE_KEY.');
   }
 
   private intervalToMs(interval: string): number {
@@ -615,6 +650,7 @@ export class HyperliquidClient {
       }
       this.sdk = null;
       this.connected = false;
+      this.derivedAddress = ''; // Reset so it re-derives on next connect
     }
   }
 }
