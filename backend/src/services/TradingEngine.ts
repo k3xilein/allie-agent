@@ -119,6 +119,9 @@ export class TradingEngine {
       // Step 4: Check Existing Positions for Exit
       await this.checkPositionExits(positions, marketData.currentPrice);
 
+      // Step 4b: Check for partial profit taking on winning positions
+      await this.checkPartialProfits(positions, marketData.currentPrice);
+
       // Step 5: AI Analysis (combines technical + fundamental)
       logger.info('Step 5: Running AI analysis...');
       const aiDecision = await aiService.analyzeMarket(
@@ -133,7 +136,7 @@ export class TradingEngine {
       if (aiDecision.action !== 'HOLD') {
         logger.info('Step 6: Risk check...');
         
-        // Calculate position size based on balance
+        // Calculate position size based on balance and AI suggestion
         const sizePercent = config.trading.maxPositionSizePercent;
         aiDecision.suggestedSize = balance.availableBalance * (sizePercent / 100);
 
@@ -311,6 +314,38 @@ export class TradingEngine {
             pnl: pnl.toFixed(2),
             exitReason: exitCheck.reason,
           });
+        }
+      }
+    }
+  }
+
+  // ============ PARTIAL PROFIT TAKING ============
+  private async checkPartialProfits(positions: Position[], currentPrice: number): Promise<void> {
+    for (const position of positions) {
+      const pnlPct = position.unrealizedPnL.percentage;
+
+      // Take 50% profit at 3%+ gain, and let the rest ride with trailing stop
+      if (pnlPct >= 3) {
+        const halfSize = position.size * 0.5;
+        
+        // Only take partial if we haven't already (check if size is large enough)
+        if (halfSize >= 0.01) {
+          logger.info(`💰 Partial profit taking: ${position.symbol} at ${pnlPct.toFixed(2)}% gain`, {
+            closingSize: halfSize,
+            remainingSize: position.size - halfSize,
+          });
+
+          const result = await hyperliquidClient.closePosition(
+            position.symbol,
+            halfSize,
+            position.side
+          );
+
+          if (result.success) {
+            const partialPnl = position.unrealizedPnL.absolute * 0.5;
+            riskManagementEngine.recordTradeResult(partialPnl);
+            logger.info(`✅ Partial profit taken: $${partialPnl.toFixed(2)}`);
+          }
         }
       }
     }

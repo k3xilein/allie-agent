@@ -17,7 +17,7 @@ export class RiskManagementEngine {
   getRiskLimits(): RiskLimits {
     return {
       maxPositionSizePercent: config.trading.maxPositionSizePercent,
-      maxPortfolioHeat: 25, // Max 25% of equity at risk
+      maxPortfolioHeat: 40, // Max 40% of equity at risk (was 25%)
       maxDailyLossPercent: config.trading.maxDailyLossPercent,
       maxDrawdownPercent: config.trading.maxDrawdownPercent,
       maxConsecutiveLosses: config.trading.maxConsecutiveLosses,
@@ -26,7 +26,7 @@ export class RiskManagementEngine {
       minConfidence: config.trading.minConfidence,
       minRiskRewardRatio: config.trading.minRiskRewardRatio,
       cooldownMinutes: config.trading.cooldownMinutes,
-      maxOrderSizeUSD: 50000, // Hard cap
+      maxOrderSizeUSD: 100000, // Hard cap (raised from 50k)
       maxSlippagePercent: config.trading.maxSlippagePercent,
     };
   }
@@ -130,16 +130,16 @@ export class RiskManagementEngine {
       warnings.push(`Size hard-capped at $${limits.maxOrderSizeUSD}`);
     }
 
-    // Reduce size during drawdown (scale down linearly)
-    if (drawdownPercent > 5) {
-      const reductionFactor = 1 - (drawdownPercent / limits.maxDrawdownPercent) * 0.5;
-      adjustedSize *= Math.max(0.25, reductionFactor);
+    // Reduce size during drawdown (less aggressively — keep trading)
+    if (drawdownPercent > 10) {
+      const reductionFactor = 1 - (drawdownPercent / limits.maxDrawdownPercent) * 0.3;
+      adjustedSize *= Math.max(0.4, reductionFactor);
       warnings.push(`Size reduced ${((1 - reductionFactor) * 100).toFixed(0)}% due to ${drawdownPercent.toFixed(1)}% drawdown`);
     }
 
-    // Reduce size after consecutive losses
-    if (this.consecutiveLosses > 0) {
-      const lossFactor = Math.pow(0.7, this.consecutiveLosses); // 30% reduction per loss
+    // Reduce size after consecutive losses (gentler curve)
+    if (this.consecutiveLosses >= 2) {
+      const lossFactor = Math.pow(0.8, this.consecutiveLosses - 1); // 20% reduction per loss after 2nd
       adjustedSize *= lossFactor;
       warnings.push(`Size reduced after ${this.consecutiveLosses} consecutive losses`);
     }
@@ -151,10 +151,10 @@ export class RiskManagementEngine {
       warnings.push(`Leverage capped at ${limits.maxLeverage}x`);
     }
 
-    // Reduce leverage during high volatility
+    // Reduce leverage during high volatility (but less aggressively)
     if (decision.marketRegime === 'volatile') {
-      adjustedLeverage = Math.max(1, Math.floor(adjustedLeverage * 0.5));
-      warnings.push('Leverage halved due to high volatility');
+      adjustedLeverage = Math.max(1, Math.floor(adjustedLeverage * 0.7));
+      warnings.push('Leverage reduced 30% due to high volatility');
     }
 
     // 11. Portfolio Heat Check
@@ -400,8 +400,8 @@ export class RiskManagementEngine {
       }
     }
 
-    // Emergency: Position unrealized loss > 5%
-    if (position.unrealizedPnL.percentage < -5) {
+    // Emergency: Position unrealized loss > 8%
+    if (position.unrealizedPnL.percentage < -8) {
       return { shouldExit: true, reason: `Emergency exit: ${position.unrealizedPnL.percentage.toFixed(2)}% loss` };
     }
 
