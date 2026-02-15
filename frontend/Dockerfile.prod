@@ -40,14 +40,12 @@ RUN chown -R nginx:nginx /usr/share/nginx/html && \
     chown -R nginx:nginx /var/cache/nginx && \
     chown -R nginx:nginx /var/log/nginx
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost/health || exit 1
+# Health check (check local nginx, not backend proxy)
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:80/ || exit 1
 
 # Expose ports
 EXPOSE 80 443
 
-# Switch to non-root user
-USER nginx
-
+# Nginx must run as root to read SSL certificates from /etc/letsencrypt
 CMD ["nginx", "-g", "daemon off;"]
