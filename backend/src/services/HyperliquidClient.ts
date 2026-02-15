@@ -236,7 +236,7 @@ export class HyperliquidClient {
       });
 
       const result = await sdk.exchange.placeOrder({
-        coin,
+        coin: symbol,
         is_buy: side === 'buy',
         sz: size,
         limit_px: limitPrice,
@@ -279,7 +279,7 @@ export class HyperliquidClient {
       if (resting) {
         logger.warn('Order is resting (not filled immediately)', { oid: resting.resting.oid });
         // Cancel resting order
-        await sdk.exchange.cancelOrder({ coin, o: resting.resting.oid });
+        await sdk.exchange.cancelOrder({ coin: symbol, o: resting.resting.oid });
         return { success: false, error: 'Order not filled immediately, cancelled', executionTimeMs: executionTime };
       }
 
@@ -302,10 +302,9 @@ export class HyperliquidClient {
     const startTime = Date.now();
     try {
       const sdk = await this.ensureConnected();
-      const coin = symbol.replace('-PERP', '').replace('-SPOT', '');
 
       const result = await sdk.exchange.placeOrder({
-        coin,
+        coin: symbol,
         is_buy: side === 'buy',
         sz: size,
         limit_px: price,
@@ -359,7 +358,6 @@ export class HyperliquidClient {
     const startTime = Date.now();
     try {
       const sdk = await this.ensureConnected();
-      const coin = symbol.replace('-PERP', '').replace('-SPOT', '');
 
       const isTP = orderType === 'take_profit';
       const triggerCondition = side === 'buy' 
@@ -367,7 +365,7 @@ export class HyperliquidClient {
         : (isTP ? 'tp' : 'sl');
 
       const result = await sdk.exchange.placeOrder({
-        coin,
+        coin: symbol,
         is_buy: side === 'buy',
         sz: size,
         limit_px: triggerPrice,
@@ -478,8 +476,7 @@ export class HyperliquidClient {
   async getOrderBook(symbol: string): Promise<OrderBookSummary> {
     try {
       const sdk = await this.ensureConnected();
-      const coin = symbol.replace('-PERP', '').replace('-SPOT', '');
-      const book = await sdk.info.getL2Book(coin);
+      const book = await sdk.info.getL2Book(symbol);
       const levels = (book as any).levels || [[], []];
       const bids = levels[0] || [];
       const asks = levels[1] || [];
@@ -555,8 +552,7 @@ export class HyperliquidClient {
   async setLeverage(symbol: string, leverage: number): Promise<boolean> {
     try {
       const sdk = await this.ensureConnected();
-      const coin = symbol.replace('-PERP', '').replace('-SPOT', '');
-      await sdk.exchange.updateLeverage(coin, 'cross', leverage);
+      await sdk.exchange.updateLeverage(symbol, 'cross', leverage);
       logger.info(`Leverage set to ${leverage}x for ${symbol}`);
       return true;
     } catch (error) {
@@ -569,8 +565,7 @@ export class HyperliquidClient {
   async cancelAllOrders(symbol?: string): Promise<void> {
     try {
       const sdk = await this.ensureConnected();
-      const coin = symbol ? symbol.replace('-PERP', '').replace('-SPOT', '') : undefined;
-      await sdk.custom.cancelAllOrders(coin);
+      await sdk.custom.cancelAllOrders(symbol);
       logger.info('All orders cancelled', { symbol: symbol || 'ALL' });
     } catch (error) {
       logger.error('Failed to cancel orders', { error: String(error) });
