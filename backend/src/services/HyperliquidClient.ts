@@ -221,7 +221,7 @@ export class HyperliquidClient {
       // Get current price for slippage limit
       const mids = await sdk.info.getAllMids();
       const coin = symbol.replace('-PERP', '').replace('-SPOT', '');
-      const midPrice = parseFloat((mids as any)[coin] || '0');
+      const midPrice = parseFloat((mids as any)[symbol] || (mids as any)[coin] || '0');
       
       if (midPrice === 0) {
         return { success: false, error: `Could not get price for ${symbol}` };
@@ -466,7 +466,7 @@ export class HyperliquidClient {
       const sdk = await this.ensureConnected();
       const mids = await sdk.info.getAllMids();
       const coin = symbol.replace('-PERP', '').replace('-SPOT', '');
-      return parseFloat((mids as any)[coin] || '0');
+      return parseFloat((mids as any)[symbol] || (mids as any)[coin] || '0');
     } catch (error) {
       logger.error('Failed to get current price', { error: String(error), symbol });
       throw error;
