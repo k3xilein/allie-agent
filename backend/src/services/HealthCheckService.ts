@@ -301,7 +301,7 @@ class HealthCheckService {
       // Place a tiny limit order far from market price (won't fill) then cancel it
       // This proves: auth works, order submission works, cancel works
       const testPrice = price * 0.5; // 50% below market — will never fill
-      const minSize = 0.001; // Smallest possible position
+      const minSize = 0.01; // Smallest size for most assets (szDecimals=2)
 
       logger.info('🧪 Test trade: placing test limit order...', { symbol, testPrice, size: minSize });
 

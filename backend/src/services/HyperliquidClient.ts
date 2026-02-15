@@ -235,16 +235,21 @@ export class HyperliquidClient {
 
       // Apply slippage tolerance: market order with limit price
       const slippageMult = side === 'buy' ? (1 + slippagePercent / 100) : (1 - slippagePercent / 100);
-      const limitPrice = midPrice * slippageMult;
+      const limitPrice = this.formatPrice(midPrice * slippageMult);
+      const formattedSize = await this.formatSize(symbol, size);
+
+      if (formattedSize <= 0) {
+        return { success: false, error: 'Order size too small after rounding' };
+      }
 
       logger.info('📊 Placing market order', {
-        symbol, side, size, midPrice, limitPrice, leverage,
+        symbol, side, size: formattedSize, midPrice, limitPrice, leverage,
       });
 
       const result = await sdk.exchange.placeOrder({
         coin: symbol,
         is_buy: side === 'buy',
-        sz: size,
+        sz: formattedSize,
         limit_px: limitPrice,
         order_type: { limit: { tif: 'Ioc' } }, // IOC = immediate or cancel (market-like)
         reduce_only: false,
@@ -308,12 +313,18 @@ export class HyperliquidClient {
     const startTime = Date.now();
     try {
       const sdk = await this.ensureConnected();
+      const formattedPrice = this.formatPrice(price);
+      const formattedSize = await this.formatSize(symbol, size);
+
+      if (formattedSize <= 0) {
+        return { success: false, error: 'Order size too small after rounding', executionTimeMs: 0 };
+      }
 
       const result = await sdk.exchange.placeOrder({
         coin: symbol,
         is_buy: side === 'buy',
-        sz: size,
-        limit_px: price,
+        sz: formattedSize,
+        limit_px: formattedPrice,
         order_type: { limit: { tif: 'Gtc' } },
         reduce_only: reduceOnly,
       });
@@ -364,6 +375,8 @@ export class HyperliquidClient {
     const startTime = Date.now();
     try {
       const sdk = await this.ensureConnected();
+      const formattedPrice = this.formatPrice(triggerPrice);
+      const formattedSize = await this.formatSize(symbol, size);
 
       const isTP = orderType === 'take_profit';
       const triggerCondition = side === 'buy' 
@@ -373,9 +386,9 @@ export class HyperliquidClient {
       const result = await sdk.exchange.placeOrder({
         coin: symbol,
         is_buy: side === 'buy',
-        sz: size,
-        limit_px: triggerPrice,
-        order_type: { trigger: { triggerPx: String(triggerPrice), isMarket: true, tpsl: triggerCondition } },
+        sz: formattedSize,
+        limit_px: formattedPrice,
+        order_type: { trigger: { triggerPx: String(formattedPrice), isMarket: true, tpsl: triggerCondition } },
         reduce_only: true,
       });
 
@@ -627,6 +640,54 @@ export class HyperliquidClient {
       '1d': 86400000,
     };
     return map[interval] || 900000; // Default 15m
+  }
+
+  /**
+   * Hyperliquid requires prices to have at most 5 significant figures
+   * and a maximum of 6 decimals.
+   */
+  private formatPrice(price: number): number {
+    // Round to 5 significant figures
+    const sigFigs = parseFloat(price.toPrecision(5));
+    // Also cap at 6 decimal places
+    return parseFloat(sigFigs.toFixed(6));
+  }
+
+  /**
+   * Get szDecimals for a given coin from Hyperliquid meta.
+   * Caches the result for the session.
+   */
+  private szDecimalsCache: Record<string, number> = {};
+
+  private async getSzDecimals(symbol: string): Promise<number> {
+    if (this.szDecimalsCache[symbol] !== undefined) {
+      return this.szDecimalsCache[symbol];
+    }
+    try {
+      const sdk = await this.ensureConnected();
+      const meta = await sdk.info.perpetuals.getMeta();
+      // Meta universe uses names like "SOL-PERP" (SDK) or "SOL" (raw API)
+      const coin = symbol.replace('-PERP', '').replace('-SPOT', '');
+      for (const asset of (meta as any).universe || []) {
+        const name = (asset.name || '').replace('-PERP', '').replace('-SPOT', '');
+        if (name === coin || asset.name === symbol) {
+          this.szDecimalsCache[symbol] = asset.szDecimals ?? 2;
+          return asset.szDecimals ?? 2;
+        }
+      }
+    } catch (err) {
+      logger.warn('Could not fetch szDecimals for ' + symbol, { error: String(err) });
+    }
+    return 2; // Default fallback
+  }
+
+  /**
+   * Round size to the correct number of decimal places for this coin.
+   */
+  private async formatSize(symbol: string, size: number): Promise<number> {
+    const decimals = await this.getSzDecimals(symbol);
+    const factor = Math.pow(10, decimals);
+    return Math.floor(size * factor) / factor; // Round down to avoid exceeding balance
   }
 
   isConnected(): boolean {
