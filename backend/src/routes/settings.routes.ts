@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { SettingsService } from '../services/SettingsService';
 import { requireAuth, AuthRequest } from '../middleware/auth';
 import { loadSettingsIntoConfig } from '../config/environment';
+import { hyperliquidClient } from '../services/HyperliquidClient';
 import { logger } from '../utils/logger';
 
 const router = Router();
@@ -30,6 +31,11 @@ router.put('/', requireAuth, async (req: AuthRequest, res: Response) => {
     // Reload API keys + settings into runtime config so services use updated values
     await loadSettingsIntoConfig();
     
+    // Force reconnect with new credentials
+    hyperliquidClient.reconnect().catch(err => 
+      logger.warn('HyperliquidClient reconnect after settings save:', { error: String(err) })
+    );
+    
     res.json(updated);
   } catch (error: any) {
     logger.error('Error updating settings:', error);
@@ -53,6 +59,11 @@ router.post('/onboarding', requireAuth, async (req: AuthRequest, res: Response) 
     
     // Reload API keys + settings into runtime config
     await loadSettingsIntoConfig();
+    
+    // Force reconnect with new credentials
+    hyperliquidClient.reconnect().catch(err => 
+      logger.warn('HyperliquidClient reconnect after onboarding save:', { error: String(err) })
+    );
     
     res.json(saved);
   } catch (error) {

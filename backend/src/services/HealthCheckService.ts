@@ -260,6 +260,8 @@ class HealthCheckService {
           ? 'Insufficient credits'
           : status === 429
           ? 'Rate limited'
+          : status === 400
+          ? `Bad request — model "${config.ai.model}" may be invalid: ${error.response?.data?.error?.message || error.message}`
           : error.message;
 
       return {

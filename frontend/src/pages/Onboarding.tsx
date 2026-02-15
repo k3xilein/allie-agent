@@ -41,6 +41,7 @@ export const Onboarding: React.FC = () => {
 
   const [hyperliquidApiKey, setHyperliquidApiKey] = useState('');
   const [hyperliquidPrivateKey, setHyperliquidPrivateKey] = useState('');
+  const [hyperliquidWalletAddress, setHyperliquidWalletAddress] = useState('');
   const [openrouterApiKey, setOpenrouterApiKey] = useState('');
   const [useTestnet, setUseTestnet] = useState(true);
 
@@ -62,7 +63,7 @@ export const Onboarding: React.FC = () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             apiKeys: {
-              hyperliquid: { apiKey: hyperliquidApiKey, privateKey: hyperliquidPrivateKey, testnet: useTestnet },
+              hyperliquid: { apiKey: hyperliquidApiKey, privateKey: hyperliquidPrivateKey, walletAddress: hyperliquidWalletAddress, testnet: useTestnet },
               openrouter: { apiKey: openrouterApiKey },
             },
             riskManagement: { maxPositionSize, maxDailyLoss, stopLossPercent, takeProfitPercent },
@@ -132,6 +133,10 @@ export const Onboarding: React.FC = () => {
                   <label className="text-xs font-medium text-white/40 uppercase tracking-wider mb-1.5 block">Private Key</label>
                   <Input type="password" value={hyperliquidPrivateKey} onChange={(e) => setHyperliquidPrivateKey(e.target.value)} placeholder="Optional — can be added later" />
                 </div>
+                <div>
+                  <label className="text-xs font-medium text-white/40 uppercase tracking-wider mb-1.5 block">Wallet Address</label>
+                  <Input type="text" value={hyperliquidWalletAddress} onChange={(e) => setHyperliquidWalletAddress(e.target.value)} placeholder="0x... (required for agent wallets)" />
+                </div>
                 <div className="flex items-center gap-3 pt-1">
                   <Toggle checked={useTestnet} onChange={setUseTestnet} />
                   <span className="text-sm text-white/50">Use Testnet (recommended for initial testing)</span>
@@ -146,7 +151,7 @@ export const Onboarding: React.FC = () => {
               <div>
                 <label className="text-xs font-medium text-white/40 uppercase tracking-wider mb-1.5 block">API Key</label>
                 <Input type="password" value={openrouterApiKey} onChange={(e) => setOpenrouterApiKey(e.target.value)} placeholder="Optional — can be added later" />
-                <p className="text-xs text-white/25 mt-1.5">For AI-powered trading decisions (Kimi K2 Model)</p>
+                <p className="text-xs text-white/25 mt-1.5">For AI-powered trading decisions (Gemini Flash)</p>
               </div>
             </div>
 

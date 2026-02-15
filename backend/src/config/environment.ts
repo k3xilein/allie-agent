@@ -25,14 +25,14 @@ export const config = {
   },
   ai: {
     apiKey: process.env.OPENROUTER_API_KEY || '',
-    model: process.env.AI_MODEL || 'moonshot/kimi-k2',
+    model: process.env.AI_MODEL || 'google/gemini-2.0-flash-001',
   },
   server: {
     port: parseInt(process.env.PORT || '4000', 10),
     env: process.env.NODE_ENV || 'development',
   },
   trading: {
-    symbol: process.env.TRADING_SYMBOL || 'BTC-PERP',
+    symbol: process.env.TRADING_SYMBOL || 'SOL-PERP',
     analysisIntervalMinutes: parseInt(process.env.ANALYSIS_INTERVAL || '5', 10),
     maxPositionSizePercent: parseFloat(process.env.MAX_POSITION_SIZE_PCT || '10'),
     maxDailyLossPercent: parseFloat(process.env.MAX_DAILY_LOSS_PCT || '5'),
@@ -84,6 +84,9 @@ export async function loadSettingsIntoConfig(): Promise<void> {
         }
         if (apiKeys.hyperliquid?.privateKey) {
           config.hyperliquid.privateKey = apiKeys.hyperliquid.privateKey;
+        }
+        if (apiKeys.hyperliquid?.walletAddress) {
+          config.hyperliquid.walletAddress = apiKeys.hyperliquid.walletAddress;
         }
         if (typeof apiKeys.hyperliquid?.testnet === 'boolean') {
           config.hyperliquid.testnet = apiKeys.hyperliquid.testnet;

@@ -6,17 +6,18 @@ import { logger } from '../utils/logger';
 
 export class HyperliquidClient {
   private sdk: Hyperliquid | null = null;
-  private privateKey: string;
-  private testnet: boolean;
-  private walletAddress: string;
   private connected: boolean = false;
   private lastConnectionAttempt: number = 0;
   private connectionCooldown: number = 30000; // 30s between retries
 
+  // Read config dynamically — never cache, because loadSettingsIntoConfig()
+  // may update config AFTER this singleton is constructed.
+  private get privateKey(): string { return config.hyperliquid.privateKey; }
+  private get testnet(): boolean { return config.hyperliquid.testnet; }
+  private get walletAddress(): string { return config.hyperliquid.walletAddress || ''; }
+
   constructor() {
-    this.privateKey = config.hyperliquid.privateKey;
-    this.testnet = config.hyperliquid.testnet;
-    this.walletAddress = config.hyperliquid.walletAddress || '';
+    // Config is read via getters — no caching needed
   }
 
   // Initialize SDK connection
@@ -30,13 +31,20 @@ export class HyperliquidClient {
     this.lastConnectionAttempt = now;
 
     try {
-      if (!this.privateKey) {
+      const pk = this.privateKey;
+      if (!pk) {
         logger.warn('Hyperliquid private key not configured');
         return false;
       }
 
+      logger.info('🔌 Attempting Hyperliquid SDK connection...', {
+        testnet: this.testnet,
+        hasWallet: !!this.walletAddress,
+        keyLen: pk.length,
+      });
+
       this.sdk = new Hyperliquid({
-        privateKey: this.privateKey,
+        privateKey: pk,
         testnet: this.testnet,
         enableWs: false, // Use REST for reliability
         walletAddress: this.walletAddress || undefined,
@@ -84,13 +92,45 @@ export class HyperliquidClient {
     try {
       const sdk = await this.ensureConnected();
       const address = this.walletAddress || await this.getWalletAddress();
-      const state = await sdk.info.perpetuals.getClearinghouseState(address);
 
+      // Fetch perps clearinghouse state
+      const state = await sdk.info.perpetuals.getClearinghouseState(address);
       const marginSummary = (state as any).marginSummary || {};
-      const totalBalance = parseFloat(marginSummary.accountValue || '0');
+      const perpBalance = parseFloat(marginSummary.accountValue || '0');
       const marginUsed = parseFloat(marginSummary.totalMarginUsed || '0');
+
+      // Also fetch spot balances to capture SOL, USDC, etc.
+      let spotTotal = 0;
+      try {
+        const spotState = await sdk.info.spot.getSpotClearinghouseState(address);
+        const balances = (spotState as any).balances || [];
+        for (const bal of balances) {
+          const hold = parseFloat(bal.hold || '0');
+          const total = parseFloat(bal.total || '0');
+          // total is the token balance; we add it as USD-equivalent
+          // For USDC/USDT it's 1:1, for other tokens we need mid price
+          const token = bal.coin || bal.token || '';
+          if (['USDC', 'USDT'].includes(token.toUpperCase())) {
+            spotTotal += total;
+          } else if (total > 0) {
+            // Try to get a USD price for this token
+            try {
+              const mids = await sdk.info.getAllMids();
+              const mid = parseFloat((mids as any)[token] || '0');
+              spotTotal += mid > 0 ? total * mid : total; // fallback: raw amount
+            } catch {
+              spotTotal += total; // If no price, count raw
+            }
+          }
+        }
+        logger.info('💰 Spot balances fetched', { spotTotal: spotTotal.toFixed(2), balances: balances.map((b: any) => `${b.coin || b.token}: ${b.total}`) });
+      } catch (spotErr) {
+        logger.warn('Could not fetch spot balances (may be perps-only account)', { error: String(spotErr) });
+      }
+
+      const totalBalance = perpBalance + spotTotal;
       const unrealizedPnL = parseFloat(marginSummary.totalNtlPos || '0') > 0 
-        ? totalBalance - parseFloat(marginSummary.totalRawUsd || '0') 
+        ? perpBalance - parseFloat(marginSummary.totalRawUsd || '0') 
         : 0;
 
       return {
@@ -196,7 +236,7 @@ export class HyperliquidClient {
       });
 
       const result = await sdk.exchange.placeOrder({
-        coin: symbol,
+        coin,
         is_buy: side === 'buy',
         sz: size,
         limit_px: limitPrice,
@@ -239,7 +279,7 @@ export class HyperliquidClient {
       if (resting) {
         logger.warn('Order is resting (not filled immediately)', { oid: resting.resting.oid });
         // Cancel resting order
-        await sdk.exchange.cancelOrder({ coin: symbol, o: resting.resting.oid });
+        await sdk.exchange.cancelOrder({ coin, o: resting.resting.oid });
         return { success: false, error: 'Order not filled immediately, cancelled', executionTimeMs: executionTime };
       }
 
@@ -262,9 +302,10 @@ export class HyperliquidClient {
     const startTime = Date.now();
     try {
       const sdk = await this.ensureConnected();
+      const coin = symbol.replace('-PERP', '').replace('-SPOT', '');
 
       const result = await sdk.exchange.placeOrder({
-        coin: symbol,
+        coin,
         is_buy: side === 'buy',
         sz: size,
         limit_px: price,
@@ -318,6 +359,7 @@ export class HyperliquidClient {
     const startTime = Date.now();
     try {
       const sdk = await this.ensureConnected();
+      const coin = symbol.replace('-PERP', '').replace('-SPOT', '');
 
       const isTP = orderType === 'take_profit';
       const triggerCondition = side === 'buy' 
@@ -325,7 +367,7 @@ export class HyperliquidClient {
         : (isTP ? 'tp' : 'sl');
 
       const result = await sdk.exchange.placeOrder({
-        coin: symbol,
+        coin,
         is_buy: side === 'buy',
         sz: size,
         limit_px: triggerPrice,
@@ -436,7 +478,8 @@ export class HyperliquidClient {
   async getOrderBook(symbol: string): Promise<OrderBookSummary> {
     try {
       const sdk = await this.ensureConnected();
-      const book = await sdk.info.getL2Book(symbol);
+      const coin = symbol.replace('-PERP', '').replace('-SPOT', '');
+      const book = await sdk.info.getL2Book(coin);
       const levels = (book as any).levels || [[], []];
       const bids = levels[0] || [];
       const asks = levels[1] || [];
@@ -512,7 +555,8 @@ export class HyperliquidClient {
   async setLeverage(symbol: string, leverage: number): Promise<boolean> {
     try {
       const sdk = await this.ensureConnected();
-      await sdk.exchange.updateLeverage(symbol, 'cross', leverage);
+      const coin = symbol.replace('-PERP', '').replace('-SPOT', '');
+      await sdk.exchange.updateLeverage(coin, 'cross', leverage);
       logger.info(`Leverage set to ${leverage}x for ${symbol}`);
       return true;
     } catch (error) {
@@ -525,7 +569,8 @@ export class HyperliquidClient {
   async cancelAllOrders(symbol?: string): Promise<void> {
     try {
       const sdk = await this.ensureConnected();
-      await sdk.custom.cancelAllOrders(symbol);
+      const coin = symbol ? symbol.replace('-PERP', '').replace('-SPOT', '') : undefined;
+      await sdk.custom.cancelAllOrders(coin);
       logger.info('All orders cancelled', { symbol: symbol || 'ALL' });
     } catch (error) {
       logger.error('Failed to cancel orders', { error: String(error) });
@@ -556,6 +601,14 @@ export class HyperliquidClient {
 
   isConnected(): boolean {
     return this.connected;
+  }
+
+  /** Force reconnect with fresh config (call after loadSettingsIntoConfig) */
+  async reconnect(): Promise<boolean> {
+    logger.info('🔄 Forcing HyperliquidClient reconnect with fresh config...');
+    await this.disconnect();
+    this.lastConnectionAttempt = 0; // Reset cooldown
+    return this.connect();
   }
 
   async disconnect(): Promise<void> {

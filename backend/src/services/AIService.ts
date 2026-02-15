@@ -6,16 +6,18 @@ import { config } from '../config/environment';
 import { logger } from '../utils/logger';
 
 export class AIService {
-  private apiKey: string;
-  private model: string;
   private baseURL = 'https://openrouter.ai/api/v1';
   private requestCount = 0;
   private lastRequestTime = 0;
   private minRequestInterval = 3000; // 3s between requests
 
+  // Read config dynamically — loadSettingsIntoConfig() may update config after
+  // this singleton is constructed.
+  private get apiKey(): string { return config.ai.apiKey; }
+  private get model(): string { return config.ai.model; }
+
   constructor() {
-    this.apiKey = config.ai.apiKey;
-    this.model = config.ai.model;
+    // Config is read via getters — no caching needed
   }
 
   async analyzeMarket(

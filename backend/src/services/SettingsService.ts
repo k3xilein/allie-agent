@@ -7,6 +7,7 @@ interface SettingsData {
     hyperliquid?: {
       apiKey: string;
       privateKey: string;
+      walletAddress: string;
       testnet: boolean;
     };
     openrouter?: {
@@ -48,6 +49,7 @@ export class SettingsService {
           hyperliquid: {
             apiKey: '',
             privateKey: '',
+            walletAddress: '',
             testnet: true,
           },
           openrouter: {
@@ -78,7 +80,7 @@ export class SettingsService {
 
     // Decrypt API keys if they exist
     let apiKeys: SettingsData['apiKeys'] = {
-      hyperliquid: { apiKey: '', privateKey: '', testnet: true },
+      hyperliquid: { apiKey: '', privateKey: '', walletAddress: '', testnet: true },
       openrouter: { apiKey: '' },
     };
     if (settings.api_keys_encrypted && settings.api_keys_iv && settings.api_keys_tag) {
@@ -135,6 +137,7 @@ export class SettingsService {
     const hasAnyKey =
       settingsData.apiKeys?.hyperliquid?.apiKey ||
       settingsData.apiKeys?.hyperliquid?.privateKey ||
+      settingsData.apiKeys?.hyperliquid?.walletAddress ||
       settingsData.apiKeys?.openrouter?.apiKey;
 
     if (settingsData.apiKeys && hasAnyKey) {

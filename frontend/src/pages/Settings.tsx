@@ -24,7 +24,7 @@ import {
 
 interface SettingsData {
   apiKeys: {
-    hyperliquid: { apiKey: string; privateKey: string; testnet: boolean };
+    hyperliquid: { apiKey: string; privateKey: string; walletAddress: string; testnet: boolean };
     openrouter: { apiKey: string };
   };
   riskManagement: {
@@ -54,7 +54,7 @@ export const Settings: React.FC = () => {
 
   const [settings, setSettings] = useState<SettingsData>({
     apiKeys: {
-      hyperliquid: { apiKey: '', privateKey: '', testnet: true },
+      hyperliquid: { apiKey: '', privateKey: '', walletAddress: '', testnet: true },
       openrouter: { apiKey: '' },
     },
     riskManagement: { maxPositionSize: 10, maxDailyLoss: 5, stopLossPercent: 2, takeProfitPercent: 5 },
@@ -75,6 +75,7 @@ export const Settings: React.FC = () => {
             hyperliquid: {
               apiKey: data.apiKeys?.hyperliquid?.apiKey || '',
               privateKey: data.apiKeys?.hyperliquid?.privateKey || '',
+              walletAddress: data.apiKeys?.hyperliquid?.walletAddress || '',
               testnet: data.apiKeys?.hyperliquid?.testnet ?? true,
             },
             openrouter: {
@@ -123,6 +124,7 @@ export const Settings: React.FC = () => {
             hyperliquid: {
               apiKey: saved.apiKeys?.hyperliquid?.apiKey || '',
               privateKey: saved.apiKeys?.hyperliquid?.privateKey || '',
+              walletAddress: saved.apiKeys?.hyperliquid?.walletAddress || '',
               testnet: saved.apiKeys?.hyperliquid?.testnet ?? true,
             },
             openrouter: {
@@ -242,6 +244,16 @@ export const Settings: React.FC = () => {
                           placeholder="Your Private Key"
                         />
                       </div>
+                      <div>
+                        <label className="text-xs font-medium text-white/40 uppercase tracking-wider mb-1.5 block">Wallet Address</label>
+                        <Input
+                          type="text"
+                          value={settings.apiKeys.hyperliquid.walletAddress}
+                          onChange={(e) => setSettings({ ...settings, apiKeys: { ...settings.apiKeys, hyperliquid: { ...settings.apiKeys.hyperliquid, walletAddress: e.target.value } } })}
+                          placeholder="0x... (required for agent wallets)"
+                        />
+                        <p className="text-xs text-white/25 mt-1">Your Hyperliquid wallet address (0x...)</p>
+                      </div>
                       <div className="flex items-center gap-3 pt-1">
                         <Toggle
                           checked={settings.apiKeys.hyperliquid.testnet}
@@ -264,7 +276,7 @@ export const Settings: React.FC = () => {
                         onChange={(e) => setSettings({ ...settings, apiKeys: { ...settings.apiKeys, openrouter: { apiKey: e.target.value } } })}
                         placeholder="Your OpenRouter API Key"
                       />
-                      <p className="text-xs text-white/25 mt-1.5">For AI-powered trading decisions (Kimi K2 Model)</p>
+                      <p className="text-xs text-white/25 mt-1.5">For AI-powered trading decisions (Gemini Flash)</p>
                     </div>
                   </div>
 
