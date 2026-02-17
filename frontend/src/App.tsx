@@ -6,6 +6,7 @@ import { Setup } from './pages/Setup';
 import { Dashboard } from './pages/Dashboard';
 import { Onboarding } from './pages/Onboarding';
 import { Settings } from './pages/Settings';
+import { ActivityLogs } from './pages/ActivityLogs';
 
 const App: React.FC = () => {
   const { isAuthenticated, checkSession } = useAuthStore();
@@ -26,6 +27,10 @@ const App: React.FC = () => {
         <Route 
           path="/settings" 
           element={isAuthenticated ? <Settings /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/activity" 
+          element={isAuthenticated ? <ActivityLogs /> : <Navigate to="/login" />} 
         />
         <Route 
           path="/dashboard" 

@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Settings,
   LogOut,
+  ScrollText,
 } from 'lucide-react';
 
 interface AppShellProps {
@@ -15,6 +16,7 @@ interface AppShellProps {
 
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { path: '/activity', label: 'Activity Log', icon: ScrollText },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];
 

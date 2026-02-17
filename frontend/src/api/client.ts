@@ -66,4 +66,14 @@ export const healthAPI = {
     api.get('/health/status'),
 };
 
+// Activity Logs
+export const activityLogsAPI = {
+  getLogs: (page: number = 1, limit: number = 50, category?: string, severity?: string) => {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (category && category !== 'all') params.set('category', category);
+    if (severity && severity !== 'all') params.set('severity', severity);
+    return api.get(`/activity-logs?${params.toString()}`);
+  },
+};
+
 export default api;
